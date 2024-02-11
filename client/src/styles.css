@@ -1,0 +1,67 @@
+@import url("../node_modules/bootstrap/dist/css/bootstrap.min.css");
+#input-background-container{
+    height: 100vh;
+    width: 100%;
+    background: linear-gradient(45deg, #4720b3, #575656, #b6014c, #7a003a);
+    background-size: 300% 300%;
+    animation: color 20s ease-in-out infinite;
+}
+
+#login-container{
+    /* With assistance from https://css.glass */
+    background: rgba(180, 180, 180, 0.5);
+    height: 60vh;
+    width: 40vw;
+    border-radius: 12px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(6.4px);
+    -webkit-backdrop-filter: blur(6.4px);
+    border: 1px solid rgba(180, 180, 180, 0.8);
+    font-size: 0.7vw;
+}
+
+#login-container .flex-fill {
+    max-width: 50%;
+    padding: 2.5%;
+    align-self: center;
+    position: relative;
+    height: 100%;
+}
+
+#login-container .flex-fill .btn {
+    height: 3rem;
+}
+
+.navbar {
+    background: rgba(122, 0, 59, 0.7);
+}
+
+#portal {
+    width: 85%;
+}
+
+h1 {
+    font-size: 1.5vw;
+}
+
+h3 {
+    font-size: 1vw;
+}
+
+#home-container {
+    background: #4720b3;
+    width: 100vw;
+    height: calc(100vh - 91.33px);
+}
+
+@keyframes color {
+    0% {
+        background-position: 0 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0 50%;
+    }
+}

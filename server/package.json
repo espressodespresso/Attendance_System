@@ -1,0 +1,14 @@
+{
+  "name": "attendance_system_server",
+  "version": "1.0.0",
+  "description": "attendance system api",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "hono": "^4.0.1"
+  }
+}
