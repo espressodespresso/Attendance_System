@@ -4,11 +4,21 @@
   "description": "attendance system api",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsx watch src/index.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "hono": "^4.0.1"
+    "@hono/node-server": "^1.7.0",
+    "@types/cookie": "^0.6.0",
+    "@types/node": "^20.11.17",
+    "cookie": "^0.6.0",
+    "dotenv": "^16.4.2",
+    "dotenv-expand": "^11.0.2",
+    "hono": "^4.0.1",
+    "mongodb": "^6.3.0"
+  },
+  "compilerOptions": {
+    "moduleResolution": "node"
   }
 }
