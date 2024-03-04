@@ -2,6 +2,7 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { login } from "./routes/login";
 import { cors } from 'hono/cors'
+import { account } from "./routes/account";
 const dotenv = require('dotenv');
 const dotenvExpand = require('dotenv-expand');
 
@@ -19,6 +20,16 @@ app.use('/login', cors({
     exposeHeaders: ['Set-Cookie']
 }));
 app.route('/login', login);
+
+app.use('account', cors({
+    origin: ['http://localhost:63342', 'http://localhost:8080'],
+    allowHeaders: ['Content-Type', 'Accept', 'Authorization'],
+    credentials: true,
+    exposeHeaders: ['Set-Cookie'],
+    allowMethods: ['GET'],
+}));
+app.route('/account', account);
+
 //app.use('/login', cors());
 
 

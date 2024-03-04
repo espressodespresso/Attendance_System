@@ -9,14 +9,17 @@ export const login = new Hono()
 
 login.post('/', async (c) => {
     const body: JSON = JSON.parse(await c.req.text());
-    const authState = await mongo.login(body["username"], body["password"]);
-    switch (authState) {
+    const data = await mongo.login(body["username"], body["password"]);
+    switch (data.authstate) {
         case AuthState.Located:
-            const token = await sign(body["username"], process.env.SECRET);
+            const token = await sign(data.account, process.env.SECRET);
+            console.log("hello")
+            console.log(data.account);
             const setCookie = cookie.serialize("token", token, {
                 maxAge: 900,
                 httpOnly: true
             })
+
             c.res.headers.append('set-cookie', setCookie);
             //return c.text("redirecting...")
             break;
@@ -27,7 +30,7 @@ login.post('/', async (c) => {
         default:
             return c.text("Error occured")
     }
-    return c.text(authState.toString());
+    return c.text(data.authstate.toString());
 })
 
 /*login.post('/', async (c)=> {

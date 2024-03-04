@@ -11,9 +11,12 @@
   "license": "ISC",
   "dependencies": {
     "@types/bootstrap": "^5.2.10",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^20.11.13",
     "bootstrap": "^5.3.2",
     "browserify-css": "^0.15.0",
-    "chart.js": "^4.4.1"
+    "chart.js": "^4.4.1",
+    "flatpickr": "^4.6.13",
+    "js-cookie": "^3.0.5"
   }
 }
