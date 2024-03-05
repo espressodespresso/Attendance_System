@@ -21,12 +21,12 @@ app.use('/login', cors({
 }));
 app.route('/login', loginRoute);
 
-app.use('account', cors({
+app.use('/account/*', cors({
     origin: ['http://localhost:63342', 'http://localhost:8080'],
     allowHeaders: ['Content-Type', 'Accept', 'Authorization'],
     credentials: true,
     exposeHeaders: ['Set-Cookie'],
-    allowMethods: ['GET'],
+    allowMethods: ['GET', 'POST'],
 }));
 app.route('/account', accountRoute);
 

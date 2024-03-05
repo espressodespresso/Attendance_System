@@ -12,15 +12,24 @@ loginRoute.post('/', async (c) => {
     const data = await mongo.login(body["username"], body["password"]);
     switch (data.authstate) {
         case AuthState.Located:
-            const token = await sign(data.account, process.env.SECRET);
-            console.log("hello")
+            const authToken = await sign(data.account, process.env.SECRET);
             console.log(data.account);
-            const setCookie = cookie.serialize("token", token, {
+            const setCookieAuth = cookie.serialize("token", authToken, {
                 maxAge: 900,
                 httpOnly: true
-            })
+            });
 
-            c.res.headers.append('set-cookie', setCookie);
+            c.res.headers.append('set-cookie', setCookieAuth);
+
+            const refreshToken = await sign(body["fingerprint"], process.env.REFRESH_SECRET);
+            const setCookieRefresh = cookie.serialize("refresh_token", refreshToken, {
+                maxAge: 1800,
+                httpOnly: true
+            });
+
+            await mongo.storeRefreshToken(refreshToken, body["username"], body["fingerprint"]);
+            c.res.headers.append('set-cookie', setCookieRefresh);
+
             //return c.text("redirecting...")
             break;
         case AuthState.InvalidPass:

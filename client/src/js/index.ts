@@ -1,6 +1,9 @@
-import {getPayloadData, verifyStatus} from "./services/AuthService";
+import {getBrowserFingerprint, getPayloadData, verifyStatus} from "./services/AuthService";
 import {insert} from "./components/NavbarComponent"
 import {HomeComponent} from "./components/home/HomeComponent";
+import FingerprintJS from "@fingerprintjs/fingerprintjs";
+
+const fpPromise = FingerprintJS.load();
 
 async function loadItems() {
     let payload = await getPayloadData();
@@ -23,7 +26,7 @@ async function loadItems() {
         loginButton.addEventListener("click", async function (){
             let username = (document.getElementById("emailInput") as HTMLInputElement).value;
             let password = (document.getElementById("passwordInput") as HTMLInputElement).value;
-            if(await verifyStatus(username, password)) {
+            if(await verifyStatus(username, password, await getBrowserFingerprint())) {
                 window.location.href = "/attendance_system/client/src/index.html"
             }
         })
@@ -43,3 +46,5 @@ function saveUserInfoLocal(payload: object) {
 //let x = new UserHome();
 
 window.onload = loadItems;
+
+export default fpPromise;

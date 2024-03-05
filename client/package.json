@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fingerprintjs/fingerprintjs": "^4.2.2",
     "@types/bootstrap": "^5.2.10",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20.11.13",

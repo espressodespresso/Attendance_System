@@ -1,13 +1,14 @@
 import {Role} from "../enums/Role.enum";
 const { MongoClient } = require("mongodb")
-import { decode } from 'hono/jwt'
+import {decode, verify} from 'hono/jwt'
 import {AuthState} from "../enums/AuthState.enum";
 
 export class MongoService {
     //private client = new MongoClient(process.env["MONGOURI "]);
-    private client = new MongoClient();
+    private client = new MongoClient("");
     private database = this.client.db('database');
     private usersCollection = this.database.collection('users');
+    private tokenCollection = this.database.collection('tokens');
 
     async login(username: string, password: string) {
         try {
@@ -69,6 +70,80 @@ export class MongoService {
 
             const result = await this.usersCollection.insertOne(user);
             console.log("Inserted user " + username + "|" + result);
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async storeRefreshToken(token: string, username: string, fingerprint: string) {
+        try {
+            await this.client.connect();
+            const dbStore = {
+                "refresh_token": token,
+                "username": username,
+                "fingerprint": fingerprint
+            }
+
+            const result = await this.tokenCollection.insertOne(dbStore);
+            console.log("Inserted token into db | " + result);
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async verifyRefreshToken(token: string, fingerprint: string) {
+        try {
+            await this.client.connect();
+            const payload = await verify(token, process.env.REFRESH_SECRET);
+            console.log("payload fingerprint : " + payload)
+            console.log("given fingerprint: " + fingerprint);
+            if(payload === fingerprint) {
+
+                return {
+                    valid: true,
+                    payload: payload
+                }
+            } else {
+
+                return {
+                    valid: false
+                }
+            }
+
+        }catch {
+
+            return {
+                valid: false
+            };
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async getAccountDetailsViaRT(token: string) {
+        try {
+            await this.client.connect();
+            const fingerprint = decode(token).payload;
+            console.log(fingerprint + "HEHE")
+            const rftokenquery = { fingerprint: fingerprint }
+            const rftokendata = await this.tokenCollection.findOne(rftokenquery);
+            console.log(rftokendata);
+            const userquery = { username: rftokendata["username"] }
+            const data = await this.usersCollection.findOne(userquery);
+            console.log(data);
+            delete data["password"];
+            return data;
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async deleteRefreshToken(token: string) {
+        try {
+            await this.client.connect();
+            const query = { refresh_token: token }
+            const result = await this.tokenCollection.deleteOne(query);
+            console.log("Deleted refresh token " + token + " | " + result.acknowledged);
         } finally {
             await this.client.close();
         }
