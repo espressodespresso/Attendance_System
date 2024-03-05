@@ -1,17 +1,19 @@
-import {getPayloadData, verifyStatus} from "./services/authService";
-import {insert} from "./components/navbar"
-import {AuthorativeModule} from "./components/authModule";
-import {UserModule} from "./components/userModule";
+import {getPayloadData, verifyStatus} from "./services/AuthService";
+import {insert} from "./components/NavbarComponent"
+import {HomeComponent} from "./components/home/HomeComponent";
 
 async function loadItems() {
     let payload = await getPayloadData();
-    //console.log(payload["username"]);
+    //console.log(payload["userinfo"]);
+    //console.log(JSON.stringify(payload["userinfo"]));
     if(typeof payload !== "object" && document.title !== "Login") {
         window.location.href = "/attendance_system/client/src/login.html"
     } else if(typeof payload === "object" && document.title === "Login") {
         window.location.href = "/attendance_system/client/src/index.html"
-        insert()
+        saveUserInfoLocal(payload["userinfo"]);
+        insert();
     } else if(typeof payload === "object") {
+        saveUserInfoLocal(payload["userinfo"]);
         insert();
     }
 
@@ -28,7 +30,16 @@ async function loadItems() {
     }
 }
 
+function saveUserInfoLocal(payload: object) {
+    if(localStorage.length >= 0) {
+        localStorage.clear();
+        localStorage.setItem("userInfo", JSON.stringify(payload));
+    }
+}
+
+//let x = new HomeComponent(JSON.parse(localStorage.getItem("userInfo"))["role"])
 //let x = new AuthorativeModule();
-//let x = new UserModule();
+//let x = new UserModComponent();
+//let x = new UserHome();
 
 window.onload = loadItems;

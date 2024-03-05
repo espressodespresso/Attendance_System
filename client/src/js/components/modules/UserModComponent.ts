@@ -1,4 +1,4 @@
-export class UserModule {
+export class UserModComponent {
     constructor() {
         const mod_container = document.getElementById("modules-container");
         const row = document.createElement("div");
@@ -15,12 +15,14 @@ export class UserModule {
         h2.classList.add("w-75", "m-auto");
         h2.textContent = "Modules (23/24)";
         column.appendChild(h2);
-        column.appendChild(this.createUnorderedList({
-            name: "Module Name",
-            semester: "Semester",
-            manatory: "Manatory",
-            lecturer: "Lecturer Information"
-        }));
+        for(let i=0; i < 3; i++) {
+            column.appendChild(this.createUnorderedList({
+                name: "Module Name",
+                semester: "Semester",
+                manatory: "Manatory",
+                lecturer: "Lecturer Information"
+            }));
+        }
         row.appendChild(column);
     }
 

@@ -1,15 +1,9 @@
-import {Role} from "../routes/account";
-
+import {Role} from "../enums/Role.enum";
 const { MongoClient } = require("mongodb")
 import { decode } from 'hono/jwt'
+import {AuthState} from "../enums/AuthState.enum";
 
-export enum AuthState {
-    Located,
-    InvalidPass,
-    NotLocated
-}
-
-export class Mongo {
+export class MongoService {
     //private client = new MongoClient(process.env["MONGOURI "]);
     private client = new MongoClient();
     private database = this.client.db('database');

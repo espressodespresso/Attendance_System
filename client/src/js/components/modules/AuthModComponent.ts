@@ -81,7 +81,7 @@ export class AuthorativeModule {
         module_form.appendChild(ul);
         this.addBreakpoint(module_form);
         const selectmbutton = document.createElement("button");
-        selectmbutton.classList.add("btn", "btn-outline-dark", "w-75", "chhbutton");
+        selectmbutton.classList.add("btn", "btn-outline-dark", "w-75");
         selectmbutton.type = "button";
         selectmbutton.id = "cmsubmitbutton";
         selectmbutton.textContent = btn_title;

@@ -1,8 +1,8 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
-import { login } from "./routes/login";
+import { loginRoute } from "./routes/LoginRoute";
 import { cors } from 'hono/cors'
-import { account } from "./routes/account";
+import { accountRoute } from "./routes/AccountRoute";
 const dotenv = require('dotenv');
 const dotenvExpand = require('dotenv-expand');
 
@@ -19,7 +19,7 @@ app.use('/login', cors({
     credentials: true,
     exposeHeaders: ['Set-Cookie']
 }));
-app.route('/login', login);
+app.route('/login', loginRoute);
 
 app.use('account', cors({
     origin: ['http://localhost:63342', 'http://localhost:8080'],
@@ -28,10 +28,7 @@ app.use('account', cors({
     exposeHeaders: ['Set-Cookie'],
     allowMethods: ['GET'],
 }));
-app.route('/account', account);
-
-//app.use('/login', cors());
-
+app.route('/account', accountRoute);
 
 serve({
     fetch: app.fetch,
