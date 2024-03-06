@@ -1,32 +1,65 @@
-import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import fpPromise from "../index";
+import {RequestService} from "./RequestService";
+import {Accept} from "../enums/Accept.enum";
 
-export async function verifyStatus(username: string, password: string, fingerprint: string): Promise<boolean> {
-    let status = true;
+const requestService = new RequestService();
+
+export async function verifyStatus(username: string, password: string, fingerprint: string) {
     const loginURL = 'http://localhost:8080/login';
     try {
-        const response = await fetch(loginURL, {
-            method: "POST",
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ "username": username, "password": password, "fingerprint": fingerprint })
-        });
-
-        const data = response.headers.get("Set-Cookie");
-    } catch (error) {
-        console.error("Error: " + error);
+        const body = JSON.stringify({ "username": username, "password": password, "fingerprint": fingerprint });
+        return await requestService.FetchPOSTRequest(loginURL, body, Accept.JSON);
+    } catch (e) {
+        console.error("Invalid credentials");
     }
 
-    return status;
+
 }
 
 export async function getPayloadData() {
     const accountURL = 'http://localhost:8080/account';
     try {
-        const response = await fetch(accountURL, {
+        const data = await requestService.FetchGETRequest(accountURL, Accept.JSON);
+
+        if(data["status"] === 401) {
+            await getNewAuthToken();
+        }
+
+        return data;
+    } catch (e) {
+        console.error("No Tokens");
+    }
+}
+
+async function getNewAuthToken() {
+    const refreshURL = 'http://localhost:8080/account/auth';
+    let body = JSON.stringify({ "fingerprint": await getBrowserFingerprint() });
+    try {
+        const data = await requestService.FetchPOSTRequest(refreshURL, body, Accept.JSON);
+        switch (data["status"]) {
+            case 200:
+                console.log("new auth token!");
+                await getNewRefreshToken(data["json"]["url"]);
+                break;
+            case 403:
+                console.error("no refresh token!");
+                break
+            case 500:
+                console.error("somethings very wrong!")
+                break;
+            default:
+                console.error("??????")
+                break
+        }
+    } catch (e) {
+        console.error("No Tokens")
+    }
+}
+
+async function getNewRefreshToken(refreshURL: string) {
+
+    try {
+        const response = await fetch(refreshURL, {
             method: "GET",
             credentials: 'include',
             headers: {
@@ -35,48 +68,18 @@ export async function getPayloadData() {
             }
         });
 
-        console.log(response.status);
-        if(response.status === 401) {
-            await getNewAuthToken();
-        }
-
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error: " + error);
-    }
-
-}
-
-async function getNewAuthToken() {
-    const refreshURL = 'http://localhost:8080/account/refresh';
-    console.log("ENTER " + await getBrowserFingerprint())
-
-    try {
-        const response = await fetch(refreshURL, {
-            method: "POST",
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ "fingerprint": await getBrowserFingerprint() })
-        });
-
         switch (response.status) {
             case 200:
-                console.log("good to go!");
+                console.log("Retrieved a new refresh token successfully");
                 break;
-            case 403:
-                console.log("no refresh token!");
-                break
             case 500:
-                console.log("somethings very wrong!")
+                console.log("not good");
                 break;
             default:
-                console.log("??????")
-                break
+                console.log("???");
+                break;
         }
+
     } catch (error) {
         console.error("Error: " + error);
     }

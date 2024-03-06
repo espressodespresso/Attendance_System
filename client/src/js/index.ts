@@ -7,17 +7,29 @@ const fpPromise = FingerprintJS.load();
 
 async function loadItems() {
     let payload = await getPayloadData();
-    //console.log(payload["userinfo"]);
-    //console.log(JSON.stringify(payload["userinfo"]));
-    if(typeof payload !== "object" && document.title !== "Login") {
-        window.location.href = "/attendance_system/client/src/login.html"
-    } else if(typeof payload === "object" && document.title === "Login") {
-        window.location.href = "/attendance_system/client/src/index.html"
-        saveUserInfoLocal(payload["userinfo"]);
-        insert();
-    } else if(typeof payload === "object") {
-        saveUserInfoLocal(payload["userinfo"]);
-        insert();
+    console.log(payload);
+    switch (payload["status"]) {
+        case 200:
+            if(document.title === "Login") {
+                window.location.href = "/attendance_system/client/src/index.html";
+                saveUserInfoLocal(payload["json"]["userinfo"]);
+                insert()
+            } else {
+                insert();
+            }
+
+            break;
+
+        case 401:
+            if(document.title !== "Login") {
+                window.location.href = "/attendance_system/client/src/login.html";
+            }
+
+            break;
+
+        case 500:
+            window.location.href = "/attendance_system/client/src/login.html"
+            console.error("API Error");
     }
 
     if(document.title === "Login") {

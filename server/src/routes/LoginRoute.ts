@@ -2,6 +2,8 @@ import {Hono} from "hono";
 import {MongoService} from "../services/MongoService";
 import {sign} from 'hono/jwt'
 import {AuthState} from "../enums/AuthState.enum";
+import {Logs} from "../utilities/Logs";
+import {Errors} from "../utilities/Errors";
 const cookie = require('cookie')
 
 const mongo = new MongoService();
@@ -33,11 +35,15 @@ loginRoute.post('/', async (c) => {
             //return c.text("redirecting...")
             break;
         case AuthState.InvalidPass:
-            return c.text("Username or password incorrect");
+            c.status(401);
+            return c.text(Errors.InvalidPassword);
         case AuthState.NotLocated:
-            return c.text("Account not located")
+            c.status(401);
+            return c.text(Errors.InvalidAccount);
         default:
-            return c.text("Error occured")
+            console.error(Errors.CodeError);
+            return c.text(Errors.APIError);
     }
-    return c.text(data.authstate.toString());
+
+    return c.text(Logs.Login);
 })

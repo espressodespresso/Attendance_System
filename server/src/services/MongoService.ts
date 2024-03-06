@@ -2,6 +2,8 @@ import {Role} from "../enums/Role.enum";
 const { MongoClient } = require("mongodb")
 import {decode, verify} from 'hono/jwt'
 import {AuthState} from "../enums/AuthState.enum";
+import {Logs} from "../utilities/Logs";
+import {Errors} from "../utilities/Errors";
 
 export class MongoService {
     //private client = new MongoClient(process.env["MONGOURI "]);
@@ -21,18 +23,18 @@ export class MongoService {
             };
             if(account !== null) {
                 if(account["password"] === password) {
-                    console.log("Details valid");
+                    console.log(Logs.Login);
                     delete account["password"]
                     data.authstate = AuthState.Located;
                     data.account = account;
                     return data;
                 } else {
-                    console.log("Password invalid");
+                    console.error(Errors.InvalidPassword);
                     data.authstate = AuthState.InvalidPass;
                     return data;
                 }
             } else {
-                console.log("Account not found");
+                console.error(Errors.InvalidAccount)
                 data.authstate = AuthState.NotLocated;
                 return data;
             }
@@ -42,16 +44,20 @@ export class MongoService {
     }
 
     async userInfo(token: string) {
-        await this.client.connect();
-        const payload = decode(token).payload;
-        console.log("payload: " + payload["username"]);
-        const query = { username: payload["username"] }
-        const account = await this.usersCollection.findOne(query);
-        if(account) {
-            return payload;
+        try {
+            await this.client.connect();
+            const payload = decode(token).payload;
+            const query = { username: payload["username"] }
+            const account = await this.usersCollection.findOne(query);
+            if(account) {
+                console.log(Logs.DataRetrieval);
+                return payload;
+            } else {
+                console.error(Errors.InvalidAccount);
+            }
+        } finally {
+            await this.client.close();
         }
-
-        return null
     }
 
     async createAccount(username:string, password: string, role: Role, first_name: string,
@@ -69,7 +75,7 @@ export class MongoService {
             }
 
             const result = await this.usersCollection.insertOne(user);
-            console.log("Inserted user " + username + "|" + result);
+            this.resultVerification(result, Logs.AccountCreation, Errors.AccountCreation);
         } finally {
             await this.client.close();
         }
@@ -85,7 +91,7 @@ export class MongoService {
             }
 
             const result = await this.tokenCollection.insertOne(dbStore);
-            console.log("Inserted token into db | " + result);
+            this.resultVerification(result, Logs.TokenInsertion, Errors.StoreToken);
         } finally {
             await this.client.close();
         }
@@ -95,16 +101,16 @@ export class MongoService {
         try {
             await this.client.connect();
             const payload = await verify(token, process.env.REFRESH_SECRET);
-            console.log("payload fingerprint : " + payload)
-            console.log("given fingerprint: " + fingerprint);
             if(payload === fingerprint) {
 
+                console.log(Logs.TokenVerification);
                 return {
                     valid: true,
                     payload: payload
                 }
             } else {
 
+                console.error(Errors.TokenVerification);
                 return {
                     valid: false
                 }
@@ -112,6 +118,7 @@ export class MongoService {
 
         }catch {
 
+            console.error(Errors.TokenVerification);
             return {
                 valid: false
             };
@@ -124,14 +131,14 @@ export class MongoService {
         try {
             await this.client.connect();
             const fingerprint = decode(token).payload;
-            console.log(fingerprint + "HEHE")
             const rftokenquery = { fingerprint: fingerprint }
             const rftokendata = await this.tokenCollection.findOne(rftokenquery);
-            console.log(rftokendata);
+            this.resultVerification(rftokendata, Logs.TokenLocation, Errors.TokenLocation);
             const userquery = { username: rftokendata["username"] }
             const data = await this.usersCollection.findOne(userquery);
-            console.log(data);
+            this.resultVerification(data, Logs.DataRetrieval, Errors.InvalidAccount);
             delete data["password"];
+            console.log(Logs.DataRetrieval);
             return data;
         } finally {
             await this.client.close();
@@ -143,9 +150,17 @@ export class MongoService {
             await this.client.connect();
             const query = { refresh_token: token }
             const result = await this.tokenCollection.deleteOne(query);
-            console.log("Deleted refresh token " + token + " | " + result.acknowledged);
+            this.resultVerification(result, Logs.TokenDeletion, Errors.TokenDeletion);
         } finally {
             await this.client.close();
+        }
+    }
+
+    resultVerification(result, log: string, error: string) {
+        if(result.acknowledged) {
+            console.log(log);
+        } else {
+            console.error(error);
         }
     }
 }

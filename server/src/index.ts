@@ -11,8 +11,6 @@ dotenvExpand.expand(myEnv);
 
 const app = new Hono()
 
-//app.use(cors())
-
 app.use('/login', cors({
     origin: ['http://localhost:63342', 'http://localhost:8080'],
     allowHeaders: ['Content-Type', 'Accept'],

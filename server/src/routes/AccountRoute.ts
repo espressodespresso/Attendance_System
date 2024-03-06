@@ -1,7 +1,9 @@
 import {Hono} from "hono";
 import {MongoService} from "../services/MongoService";
-import {sign} from "hono/jwt";
+import {decode, sign} from "hono/jwt";
 import cookie from "cookie";
+import {Errors} from "../utilities/Errors";
+import {Logs} from "../utilities/Logs";
 
 const mongo = new MongoService();
 export const accountRoute = new Hono();
@@ -17,33 +19,27 @@ accountRoute.get('/', async (c) => {
             }
 
             if(i === cookies.length-1) {
-                console.log("401 whomp whomp");
+                console.error(Errors.NoAuthToken)
                 c.status(401);
                 return c.text(":(");
             }
         }
-        console.log("heree")
 
-        //const token = c.req.header('cookie').split(" ")[1].replace("token=", '');
         const userInfo = await mongo.userInfo(token)
-        console.log("hereee")
-
         if(userInfo !== null) {
-            console.log("Found! : " + userInfo["username"])
             return c.json({ userinfo: userInfo});
         }
 
-        console.log("hereeee")
-
-        return c.text("hi")
+        console.log(Logs.AccountRoute);
+        return c.text(Logs.AccountRoute);
     } catch {
-        console.log("No cookie :(")
+        console.error(Errors.CodeError);
         c.status(500);
-        return c.text(":(")
+        return c.text(Errors.APIError);
     }
 })
 
-accountRoute.post('/refresh', async (c) => {
+accountRoute.post('/auth', async (c) => {
     try {
         const body: JSON = JSON.parse(await c.req.text());
         let refresh_token: string;
@@ -55,55 +51,72 @@ accountRoute.post('/refresh', async (c) => {
             }
 
             if(i === cookies.length-1) {
-                console.log("401 whomp whomp");
+                console.error(Errors.NoRefreshToken);
                 c.status(401);
-                return c.text(":(");
+                return c.text(Errors.NoRefreshToken);
             }
         }
 
-        console.log("w");
-        console.log(refresh_token);
-        console.log(body["fingerprint"]);
-
         const verified = await mongo.verifyRefreshToken(refresh_token, body["fingerprint"]);
-        console.log("ww");
-        console.log(verified);
         if(verified.valid) {
-            console.log("d");
             const data = await mongo.getAccountDetailsViaRT(refresh_token);
-            console.log("dd");
-            console.log(data);
             const authToken = await sign(data, process.env.SECRET);
-            console.log("ddd");
             const setCookieAuth = cookie.serialize("token", authToken, {
                 maxAge: 900,
-                httpOnly: true
+                httpOnly: true,
+                path: "/"
             });
-
-            console.log("www");
 
             c.res.headers.append('set-cookie', setCookieAuth);
-
-            await mongo.deleteRefreshToken(refresh_token);
-            refresh_token = await sign(data["username"], process.env.REFRESH_SECRET);
-            const setCookieRefresh = cookie.serialize("refresh_token", refresh_token, {
-                maxAge: 1800,
-                httpOnly: true
-            });
-
-            console.log("wwwww");
-
-            await mongo.storeRefreshToken(refresh_token, data["username"], body["fingerprint"]);
-            c.res.headers.append('set-cookie', setCookieRefresh);
-
-            console.log("wwwwwww");
-
+            console.log(Logs.AccountAuthRoute);
+            return c.json({ url: 'http://localhost:8080/account/refresh' })
         } else {
-            return c.status(403);
+            c.status(403);
+            return c.text(Errors.TokenVerification);
         }
 
     } catch {
+        console.error(Errors.CodeError);
         c.status(500);
-        return c.text(":(");
+        return c.text(Errors.APIError);
     }
 })
+
+accountRoute.get('/refresh', async (c) => {
+    try {
+        let refresh_token: string;
+        const cookies = c.req.header('cookie').split(" ");
+        for(let i = 0; i < cookies.length; i++) {
+            if(cookies[i].startsWith("refresh_token=")) {
+                refresh_token = cookies[i].replace("refresh_token=", '');
+                break;
+            }
+
+            if(i === cookies.length-1) {
+                console.error(Errors.NoRefreshToken);
+                c.status(401);
+                return c.text(Errors.NoRefreshToken);
+            }
+        }
+
+        const data = await mongo.getAccountDetailsViaRT(refresh_token);
+        const fingerprint = decode(refresh_token).payload;
+        await mongo.deleteRefreshToken(refresh_token);
+        refresh_token = await sign(fingerprint, process.env.REFRESH_SECRET);
+        const setCookieRefresh = cookie.serialize("refresh_token", refresh_token, {
+            maxAge: 1800,
+            httpOnly: true,
+            path: "/"
+        });
+
+        await mongo.storeRefreshToken(refresh_token, data["username"], fingerprint);
+        c.res.headers.set('set-cookie', setCookieRefresh);
+        console.log(Logs.AccountRefreshRoute);
+        return c.text(Logs.AccountRefreshRoute);
+    } catch {
+        console.error(Errors.CodeError);
+        c.status(500);
+        return c.text(Errors.APIError);
+    }
+});
+
