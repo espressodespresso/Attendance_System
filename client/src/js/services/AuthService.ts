@@ -20,12 +20,23 @@ export async function getPayloadData() {
     const accountURL = 'http://localhost:8080/account';
     try {
         const data = await requestService.FetchGETRequest(accountURL, Accept.JSON);
-
         if(data["status"] === 401) {
             await getNewAuthToken();
         }
 
         return data;
+    } catch (e) {
+        console.error("No Tokens");
+    }
+}
+
+
+export async function verifyUserExists(username: string) {
+    const verifyURL = 'http://localhost:8080/account/verify/' + username;
+    let body = JSON.stringify({ "username": username });
+    try {
+        const data = await requestService.FetchGETRequest(verifyURL, Accept.JSON);
+        return data["json"]["valid"];
     } catch (e) {
         console.error("No Tokens");
     }
@@ -59,16 +70,9 @@ async function getNewAuthToken() {
 async function getNewRefreshToken(refreshURL: string) {
 
     try {
-        const response = await fetch(refreshURL, {
-            method: "GET",
-            credentials: 'include',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        });
+        const data = await requestService.FetchGETRequest(refreshURL, Accept.JSON);
 
-        switch (response.status) {
+        switch (data["status"]) {
             case 200:
                 console.log("Retrieved a new refresh token successfully");
                 break;
@@ -80,8 +84,8 @@ async function getNewRefreshToken(refreshURL: string) {
                 break;
         }
 
-    } catch (error) {
-        console.error("Error: " + error);
+    } catch (e) {
+        console.error(e);
     }
 }
 
@@ -92,3 +96,4 @@ export async function getBrowserFingerprint() {
     console.log("fingerprint: " + result.visitorId);
     return result.visitorId;
 }
+

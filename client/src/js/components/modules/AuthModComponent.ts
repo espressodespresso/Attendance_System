@@ -1,7 +1,9 @@
 import flatpickr from "flatpickr";
+import {AuthModLogic} from "../../logic/AuthModLogic";
+
+const authModLogic = new AuthModLogic();
 
 export class AuthorativeModule {
-
     constructor() {
         const mod_container = document.getElementById("modules-container");
         const row = document.createElement("div");
@@ -107,6 +109,7 @@ export class AuthorativeModule {
         this.addBreakpoint(module_Form);
         const ulcmname = document.createElement("ul");
         ulcmname.classList.add("list-group", "w-75", "m-auto");
+        ulcmname.id = "ulcmname";
         const licmname = document.createElement("li");
         licmname.classList.add("list-group-item");
         licmname.textContent = "None";
@@ -155,9 +158,12 @@ export class AuthorativeModule {
         cmsubmitbutton.textContent = "Submit"
         module_Form.appendChild(cmsubmitbutton);
 
-        flatpickr("#cmtimetable", {
-            mode: "multiple"
+        const fp = flatpickr("#cmtimetable", {
+            mode: "multiple",
+            enableTime: true
         })
+
+        authModLogic.createModule(fp);
     }
 
     editModule() {

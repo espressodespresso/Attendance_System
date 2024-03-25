@@ -65,6 +65,10 @@ h3 {
 
 }
 
+#ulcmname {
+    max-height: 60vh;
+}
+
 @keyframes color {
     0% {
         background-position: 0 50%;

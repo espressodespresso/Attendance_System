@@ -120,3 +120,20 @@ accountRoute.get('/refresh', async (c) => {
     }
 });
 
+accountRoute.get('/verify/:username', async (c) => {
+    try {
+        //const body: JSON = JSON.parse(await c.req.text());
+        if(await mongo.verifyUser(c.req.param('username'))) {
+            console.log("User exists");
+            return c.json({ valid: true })
+        }
+
+        console.log("User doesn't exist");
+        return c.json({ valid: false })
+    } catch (e) {
+        console.error(e);
+        console.error(Errors.CodeError);
+        c.status(500);
+        return c.text(Errors.APIError);
+    }
+});

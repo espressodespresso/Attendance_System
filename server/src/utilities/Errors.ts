@@ -12,5 +12,9 @@ export const Errors = {
     // AccountRoute
     NoAuthToken: "No Auth Token Received",
     NoRefreshToken: "No Refresh Token Received",
-    APIError: "API Error Occurred!"
+    APIError: "API Error Occurred!",
+    // ModuleRoute
+    ModuleCreation: "Error while inserting module",
+    NoModuleLeader: "User entered does not exist",
+    ModuleExists: "The module name entered already exists"
 }

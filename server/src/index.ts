@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { loginRoute } from "./routes/LoginRoute";
 import { cors } from 'hono/cors'
 import { accountRoute } from "./routes/AccountRoute";
+import {moduleRoute} from "./routes/ModuleRoute";
 const dotenv = require('dotenv');
 const dotenvExpand = require('dotenv-expand');
 
@@ -27,6 +28,15 @@ app.use('/account/*', cors({
     allowMethods: ['GET', 'POST'],
 }));
 app.route('/account', accountRoute);
+
+app.use('/module/*', cors({
+    origin: ['http://localhost:63342', 'http://localhost:8080'],
+    allowHeaders: ['Content-Type', 'Accept', 'Authorization'],
+    credentials: true,
+    exposeHeaders: ['Set-Cookie'],
+    allowMethods: ['GET', 'POST'],
+}));
+app.route('/module', moduleRoute);
 
 serve({
     fetch: app.fetch,

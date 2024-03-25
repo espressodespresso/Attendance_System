@@ -2,6 +2,7 @@ import {getBrowserFingerprint, getPayloadData, verifyStatus} from "./services/Au
 import {insert} from "./components/NavbarComponent"
 import {HomeComponent} from "./components/home/HomeComponent";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
+import {AuthorativeModule} from "./components/modules/AuthModComponent";
 
 const fpPromise = FingerprintJS.load();
 
@@ -53,7 +54,9 @@ function saveUserInfoLocal(payload: object) {
 }
 
 //let x = new HomeComponent(JSON.parse(localStorage.getItem("userInfo"))["role"])
-//let x = new AuthorativeModule();
+let x = new AuthorativeModule();
+//x.createModule();
+x.editModule();
 //let x = new UserModComponent();
 //let x = new UserHome();
 

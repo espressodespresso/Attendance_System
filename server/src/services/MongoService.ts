@@ -7,10 +7,11 @@ import {Errors} from "../utilities/Errors";
 
 export class MongoService {
     //private client = new MongoClient(process.env["MONGOURI "]);
-    private client = new MongoClient("");
+    private client = new MongoClient();
     private database = this.client.db('database');
     private usersCollection = this.database.collection('users');
     private tokenCollection = this.database.collection('tokens');
+    private moduleCollection = this.database.collection('module');
 
     async login(username: string, password: string) {
         try {
@@ -133,10 +134,20 @@ export class MongoService {
             const fingerprint = decode(token).payload;
             const rftokenquery = { fingerprint: fingerprint }
             const rftokendata = await this.tokenCollection.findOne(rftokenquery);
-            this.resultVerification(rftokendata, Logs.TokenLocation, Errors.TokenLocation);
+            if(rftokendata == null) {
+                console.error(Errors.TokenLocation)
+                return;
+            }
+            console.log(Logs.TokenLocation);
+            //this.resultVerification(rftokendata, Logs.TokenLocation, Errors.TokenLocation);
             const userquery = { username: rftokendata["username"] }
             const data = await this.usersCollection.findOne(userquery);
-            this.resultVerification(data, Logs.DataRetrieval, Errors.InvalidAccount);
+            if(data == null) {
+                console.error(Errors.InvalidAccount);
+                return
+            }
+            console.log(Logs.DataRetrieval);
+            //this.resultVerification(data, Logs.DataRetrieval, Errors.InvalidAccount);
             delete data["password"];
             console.log(Logs.DataRetrieval);
             return data;
@@ -155,6 +166,57 @@ export class MongoService {
             await this.client.close();
         }
     }
+
+    async verifyUser(username: string): Promise<boolean> {
+        try {
+            await this.client.connect();
+            const query = { username: username };
+            const data = await this.usersCollection.findOne(query);
+            if(data != null) {
+                return true;
+            }
+
+            return false;
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async verifyModuleExists(module_name: string): Promise<boolean> {
+        try {
+            await this.client.connect();
+            const query = { name: module_name };
+            const data = await this.moduleCollection.findOne(query);
+            if(data != null) {
+                return true;
+            }
+
+            return false;
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async createModule(module_name: string, enrolled: string[], leader: string, timetable: []){
+        try {
+            await this.client.connect();
+            const module = {
+                name: module_name,
+                enrolled: enrolled,
+                leader: leader,
+                timetable: timetable
+            }
+
+            const data = await this.moduleCollection.insertOne(module);
+
+
+            this.resultVerification(data, Logs.ModuleCreation, Errors.ModuleCreation);
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    //
 
     resultVerification(result, log: string, error: string) {
         if(result.acknowledged) {
