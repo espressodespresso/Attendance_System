@@ -1,7 +1,7 @@
 import flatpickr from "flatpickr";
 import {AuthModLogic} from "../../logic/AuthModLogic";
 
-const authModLogic = new AuthModLogic();
+let authModLogic = null;
 
 export class AuthorativeModule {
     constructor() {
@@ -57,6 +57,7 @@ export class AuthorativeModule {
         col_9.appendChild(module_content);
         row.appendChild(col_9);
         mod_container.appendChild(row);
+        authModLogic = new AuthModLogic(this);
     }
 
     private getModuleForm(): HTMLElement {
@@ -76,6 +77,7 @@ export class AuthorativeModule {
         this.addBreakpoint(module_form);
         const ul = document.createElement("ul");
         ul.classList.add("list-group", "w-75", "m-auto");
+        ul.id = "selmodul";
         const li = document.createElement("li");
         li.classList.add("list-group-item");
         li.textContent = "None";
@@ -169,6 +171,8 @@ export class AuthorativeModule {
     editModule() {
         const module_Form = this.getModuleForm();
         this.selectExistingModule(module_Form, "Modify an existing module", "Select Module");
+
+        authModLogic.getModules();
     }
 
     deleteModule() {

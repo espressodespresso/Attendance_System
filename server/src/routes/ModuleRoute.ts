@@ -7,7 +7,7 @@ const mongo = new MongoService();
 export const moduleRoute = new Hono();
 
 moduleRoute.post('/create', async (c) => {
-   try{
+   try {
        const body: JSON = JSON.parse(await c.req.text());
        const moduleName = body["name"];
        const moduleLeader = body["leader"];
@@ -25,6 +25,16 @@ moduleRoute.post('/create', async (c) => {
            c.status(400);
            return c.json({message: Errors.ModuleExists});
        }
+   } catch {
+       console.error(Errors.CodeError);
+       c.status(500);
+       return c.text(Errors.APIError);
+   }
+});
+
+moduleRoute.get('/list', async (c) => {
+   try {
+       return c.json(await mongo.loadModules());
    } catch {
        console.error(Errors.CodeError);
        c.status(500);

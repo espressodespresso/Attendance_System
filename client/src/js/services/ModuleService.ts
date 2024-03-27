@@ -26,3 +26,13 @@ export async function createModule(module: object){
     }
 }
 
+export async function loadModules(): Promise<object[]> {
+    const loadModulesURL = 'http://localhost:8080/module/list';
+    try {
+        const data = await requestService.FetchGETRequest(loadModulesURL, Accept.JSON);
+        return data["json"];
+
+    } catch (e) {
+        console.error("No Tokens");
+    }
+}

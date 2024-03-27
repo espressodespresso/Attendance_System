@@ -7,7 +7,7 @@ import {Errors} from "../utilities/Errors";
 
 export class MongoService {
     //private client = new MongoClient(process.env["MONGOURI "]);
-    private client = new MongoClient();
+    private client = new MongoClient("");
     private database = this.client.db('database');
     private usersCollection = this.database.collection('users');
     private tokenCollection = this.database.collection('tokens');
@@ -208,9 +208,18 @@ export class MongoService {
             }
 
             const data = await this.moduleCollection.insertOne(module);
-
-
+            
             this.resultVerification(data, Logs.ModuleCreation, Errors.ModuleCreation);
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async loadModules(): Promise<[]> {
+        try {
+            await this.client.connect();
+            const data = await this.moduleCollection.find({}).toArray();
+            return data;
         } finally {
             await this.client.close();
         }
