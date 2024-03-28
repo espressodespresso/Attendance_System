@@ -225,6 +225,32 @@ export class MongoService {
         }
     }
 
+    async updateModule(module_name: string, module: object) {
+        try {
+            await this.client.connect();
+            const query = { name: module_name };
+            const data = await this.moduleCollection.replaceOne(query, module);
+            this.resultVerification(data, Logs.ModuleUpdate, Errors.CodeError);
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async deleteModule(module_name: string): Promise<boolean> {
+        try {
+            await this.client.connect();
+            const query = { name: module_name };
+            const data = await this.moduleCollection.deleteOne(query);
+            if(data.deletedCount === 1) {
+                return true;
+            }
+
+            return false;
+        } finally {
+            await this.client.close()
+        }
+    }
+
     //
 
     resultVerification(result, log: string, error: string) {

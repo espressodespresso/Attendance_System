@@ -1,10 +1,12 @@
 import {verifyUserExists} from "../services/AuthService";
-import {createModule, loadModules} from "../services/ModuleService";
+import {createModule, deleteModule, loadModules, updateModule} from "../services/ModuleService";
 import {AuthorativeModule} from "../components/modules/AuthModComponent";
+import {ModuleAction} from "../enums/ModuleAction.enum";
 
 export class AuthModLogic {
-    private authModule = null;
-    public selectedModule: string  = null;
+    private authModule: AuthorativeModule = null;
+    private selectedModule: string  = null;
+    private loadedModules: object[] = null;
 
     constructor(component: AuthorativeModule) {
         const creatembutton = document.getElementById("creatembutton") as HTMLInputElement;
@@ -13,65 +15,72 @@ export class AuthModLogic {
         });
         const modifymbutton = document.getElementById("modifymbutton") as HTMLInputElement;
         modifymbutton.addEventListener("click", function () {
-            component.editModule();
+            component.selectExistingModule("Modify an existing module", "Select Module", ModuleAction.Modify);
         });
         const deletembutton = document.getElementById("deletembutton") as HTMLInputElement;
         deletembutton.addEventListener("click", function () {
-           component.deleteModule();
+            component.selectExistingModule("Delete an existing module", "Select Module", ModuleAction.Delete);
         });
 
         this.authModule = component;
     }
 
+    private async enrollUsers(users: string[]) {
+        const addUserTextBox = document.getElementById("mnenrolledinput") as HTMLInputElement;
+        let user = addUserTextBox.value;
+        if(!users.includes(user)) {
+            const userExists = await verifyUserExists(user);
+            if(userExists) {
+                users.push(user);
+                const list_group = document.getElementById("mnulname");
+                if(list_group.innerHTML.includes("None")) {
+                    list_group.innerHTML = "";
+                }
+
+                const listgroupitem = document.createElement("li");
+                listgroupitem.classList.add("list-group-item");
+                listgroupitem.textContent = user;
+                list_group.appendChild(listgroupitem);
+                addUserTextBox.value = "";
+            } else {
+                console.error("User does not exist");
+            }
+        } else {
+            console.error("User already added to queue");
+        }
+    }
+
     createModule(fp: any) {
         let users: string[] = []
-        const addUserButton = document.getElementById("cmadduserbutton");
-        addUserButton.addEventListener("click", async function () {
-            const addUserTextBox = document.getElementById("cmenrolledinput") as HTMLInputElement;
-            let user = addUserTextBox.value;
-            if(!users.includes(user)) {
-                const userExists = await verifyUserExists(user);
-                if(userExists) {
-                    users.push(user);
-                    const list_group = document.getElementById("ulcmname");
-                    if(list_group.innerHTML.includes("None")) {
-                        list_group.innerHTML = "";
-                    }
-
-                    const listgroupitem = document.createElement("li");
-                    listgroupitem.classList.add("list-group-item");
-                    listgroupitem.textContent = user;
-                    list_group.appendChild(listgroupitem);
-                } else {
-                    console.error("User does not exist");
-                }
-            } else {
-                console.error("User already added to queue");
-            }
+        const addUserButton = document.getElementById("mnadduserbutton");
+        addUserButton.addEventListener("click", async () => {
+            await this.enrollUsers(users);
         });
 
-        const submitModulebutton = document.getElementById("cmsubmitbutton");
-        submitModulebutton.addEventListener("click", async function () {
-            const nameTextBox = document.getElementById("cmnameinput") as HTMLInputElement;
-            const leaderTextBox = document.getElementById("cmleaderinput") as HTMLInputElement;
+        const submitModulebutton = document.getElementById("mnsubmitbutton");
+        submitModulebutton.addEventListener("click", async () => {
+            const nameTextBox = document.getElementById("mnnameinput") as HTMLInputElement;
+            const leaderTextBox = document.getElementById("mnleaderinput") as HTMLInputElement;
             let module = {
                 name: nameTextBox.value,
                 enrolled: users,
                 leader: leaderTextBox.value,
                 timetable: fp.selectedDates
             };
-            await createModule(module);
+            if(await createModule(module)) {
+                this.authModule.dashboardModule();
+            }
         });
     }
 
-    async getModules() {
-        const data = await loadModules();
+    async getModules(action: ModuleAction) {
+        this.loadedModules = await loadModules();
         const listgroup = document.getElementById("selmodul");
-        if(data.length > 0) {
+        if(this.loadedModules.length > 0) {
             listgroup.innerHTML = "";
         }
-        for(let i = 0; i < data.length; i++) {
-            const moduleData = data[i];
+        for(let i = 0; i < this.loadedModules.length; i++) {
+            const moduleData = this.loadedModules[i];
             const moduleName: string = moduleData["name"];
             const listgroupitem = document.createElement("li");
             listgroupitem.classList.add("list-group-item");
@@ -95,14 +104,100 @@ export class AuthModLogic {
             listgroup.appendChild(listgroupitem);
         }
 
-        const cmsubmitbuttom = document.getElementById("cmsubmitbutton");
-        cmsubmitbuttom.addEventListener("click", () => {
+        const submitbuttom = document.getElementById("smsubmitbutton");
+        submitbuttom.addEventListener("click", () => {
+            let module: object = null;
+            for(let i = 0; i < this.loadedModules.length; i++) {
+                const moduleData = this.loadedModules[i];
+                if(moduleData["name"] === this.selectedModule) {
+                    module = moduleData;
+                    break;
+                }
+            }
+
+            if(module === null) {
+                console.error("No module selected");
+            } else {
+                switch (action) {
+                    case ModuleAction.Modify:
+                        this.authModule.editModule(module);
+                        break;
+                    case ModuleAction.Delete:
+                        this.authModule.deleteModule(module);
+                        break;
+                }
+            }
+        });
+    }
+
+    editModule(fp: any, module: object) {
+        const nameinput = document.getElementById("mnnameinput") as HTMLInputElement;
+        nameinput.value = module["name"];
+        const ulname = document.getElementById("mnulname");
+        ulname.innerHTML = "";
+        const users: string[] = module["enrolled"]
+        for(let i = 0; i < users.length; i++) {
+            const listgroupitem = document.createElement("li");
+            listgroupitem.classList.add("list-group-item");
+            listgroupitem.textContent = users[i];
+            ulname.appendChild(listgroupitem);
+        }
+
+        const leaderinput = document.getElementById("mnleaderinput") as HTMLInputElement;
+        leaderinput.value = module["leader"];
+        fp.setDate(module["timetable"]);
+
+        const addUserButton = document.getElementById("mnadduserbutton");
+        addUserButton.addEventListener("click", async () => {
+            await this.enrollUsers(users);
+        });
+
+        const submitbuttom = document.getElementById("mnsubmitbutton");
+        submitbuttom.addEventListener("click", async () => {
+            let module = {
+                name: nameinput.value,
+                enrolled: users,
+                leader: leaderinput.value,
+                timetable: fp.selectedDates
+            };
+            if(await verifyUserExists(module["leader"])) {
+                try{
+                    await updateModule(module["name"], module);
+                } finally {
+                    this.authModule.dashboardModule();
+                }
+            } else {
+                console.error("Leader username entered does not exist")
+            }
 
         });
     }
 
-    editModule(fp: any) {
+    deleteModule(fp: any, module: object) {
+        let enrolledArray = module["enrolled"];
+        const enrolledul = document.getElementById("denrolledul");
+        enrolledul.innerHTML = "";
+        for(let i = 0; i < enrolledArray.length; i++) {
+            const user = enrolledArray[i];
+            const enrolledli = document.createElement("li");
+            enrolledli.classList.add("list-group-item");
+            enrolledli.textContent = user;
+            enrolledul.appendChild(enrolledli);
+        }
 
+        fp.setDate(module["timetable"]);
+        const deleteButton = document.getElementById("dbutton");
+        deleteButton.addEventListener("click", async () => {
+            if(await deleteModule(module["name"])) {
+                this.authModule.dashboardModule();
+            }
+        });
     }
 
+    dashboardModule() {
+        const dashboardmbutton = document.getElementById("dashboardmbutton");
+        dashboardmbutton.addEventListener("click", () => {
+            this.authModule.dashboardModule();
+        })
+    }
 }

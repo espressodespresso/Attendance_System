@@ -16,5 +16,6 @@ export const Errors = {
     // ModuleRoute
     ModuleCreation: "Error while inserting module",
     NoModuleLeader: "User entered does not exist",
-    ModuleExists: "The module name entered already exists"
+    ModuleExists: "The module name entered already exists",
+    NoModuleExists: "The module searched does not exist"
 }

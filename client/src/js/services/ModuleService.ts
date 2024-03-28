@@ -3,7 +3,7 @@ import {Accept} from "../enums/Accept.enum";
 
 const requestService = new RequestService();
 
-export async function createModule(module: object){
+export async function createModule(module: object): Promise<boolean> {
     const createModuleURL = 'http://localhost:8080/module/create';
     let body = JSON.stringify(module);
     try {
@@ -13,13 +13,13 @@ export async function createModule(module: object){
             case 200:
                 // clear textboxes
                 console.log(message);
-                return;
+                return true;
             case 400:
                 console.error(message);
-                return;
+                return false;
             default:
                 console.error("Unknown error");
-                return;
+                return false;
         }
     } catch (e) {
         console.error("No Tokens");
@@ -32,6 +32,36 @@ export async function loadModules(): Promise<object[]> {
         const data = await requestService.FetchGETRequest(loadModulesURL, Accept.JSON);
         return data["json"];
 
+    } catch (e) {
+        console.error("No Tokens");
+    }
+}
+
+export async function updateModule(moduleName: string, data: object) {
+    const updateModuleURL = 'http://localhost:8080/module/update';
+    try {
+        const body = {
+            name: moduleName,
+            data: data
+        }
+        await requestService.FetchPOSTRequest(updateModuleURL, JSON.stringify(body), Accept.JSON);
+        console.log("Success");
+    } catch (e) {
+        console.error("No Tokens");
+    }
+}
+
+export async function deleteModule(moduleName: string): Promise<boolean> {
+    const deleteModuleURL = 'http://localhost:8080/module/delete/' + moduleName;
+    try {
+        const result = await requestService.FetchDELETERequest(deleteModuleURL);
+        if(result) {
+            console.log("Success");
+        } else {
+            console.error("Error while deleting module");
+        }
+
+        return result;
     } catch (e) {
         console.error("No Tokens");
     }

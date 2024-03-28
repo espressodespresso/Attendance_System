@@ -34,7 +34,7 @@ app.use('/module/*', cors({
     allowHeaders: ['Content-Type', 'Accept', 'Authorization'],
     credentials: true,
     exposeHeaders: ['Set-Cookie'],
-    allowMethods: ['GET', 'POST'],
+    allowMethods: ['GET', 'POST', 'DELETE'],
 }));
 app.route('/module', moduleRoute);
 

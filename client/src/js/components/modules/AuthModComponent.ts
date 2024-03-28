@@ -1,7 +1,9 @@
 import flatpickr from "flatpickr";
 import {AuthModLogic} from "../../logic/AuthModLogic";
+import {ModuleAction} from "../../enums/ModuleAction.enum";
+import * as timers from "timers";
 
-let authModLogic = null;
+let authModLogic: AuthModLogic = null;
 
 export class AuthorativeModule {
     constructor() {
@@ -16,6 +18,14 @@ export class AuthorativeModule {
         const h2 = document.createElement("h2");
         h2.textContent = "Module Controls";
         module_controls.appendChild(h2);
+        this.addBreakpoint(module_controls);
+        const dashboardmbutton = document.createElement("button");
+        dashboardmbutton.classList.add("btn", "btn-outline-dark", "w-75");
+        dashboardmbutton.type = "button";
+        dashboardmbutton.id = "dashboardmbutton";
+        dashboardmbutton.textContent = "Open Dashboard";
+        module_controls.appendChild(dashboardmbutton);
+        this.addBreakpoint(module_controls);
         this.addBreakpoint(module_controls);
         const creatembutton = document.createElement("button");
         creatembutton.classList.add("btn", "btn-outline-dark", "w-75");
@@ -38,6 +48,7 @@ export class AuthorativeModule {
         deletembutton.textContent = "Delete an existing module";
         module_controls.appendChild(deletembutton);
         this.addBreakpoint(module_controls);
+        this.addBreakpoint(module_controls);
         const chhmbutton = document.createElement("button");
         chhmbutton.classList.add("btn", "btn-outline-dark", "w-75");
         chhmbutton.type = "button";
@@ -58,6 +69,7 @@ export class AuthorativeModule {
         row.appendChild(col_9);
         mod_container.appendChild(row);
         authModLogic = new AuthModLogic(this);
+        this.dashboardModule();
     }
 
     private getModuleForm(): HTMLElement {
@@ -70,7 +82,8 @@ export class AuthorativeModule {
         element.appendChild(document.createElement("br"));
     }
 
-    private selectExistingModule(module_form: HTMLElement, h2_title: string, btn_title: string) {
+    selectExistingModule(h2_title: string, btn_title: string, action: ModuleAction) {
+        const module_form = this.getModuleForm();
         const title = document.createElement("h2");
         title.textContent = h2_title;
         module_form.appendChild(title);
@@ -87,96 +100,156 @@ export class AuthorativeModule {
         const selectmbutton = document.createElement("button");
         selectmbutton.classList.add("btn", "btn-outline-dark", "w-75");
         selectmbutton.type = "button";
-        selectmbutton.id = "cmsubmitbutton";
+        selectmbutton.id = "smsubmitbutton";
         selectmbutton.textContent = btn_title;
         module_form.appendChild(selectmbutton);
         this.addBreakpoint(module_form);
+
+        authModLogic.getModules(action);
     }
 
     createModule() {
+        authModLogic.createModule(this.moduleDataInput("Create a new module"));
+    }
+
+    editModule(module: object) {
+        const title: string = "Editing : " + module["name"];
+        authModLogic.editModule(this.moduleDataInput(title), module);
+    }
+
+    deleteModule(module: object) {
         const module_Form = this.getModuleForm();
         const title = document.createElement("h2");
-        title.textContent = "Create a new module";
+        title.textContent = "Are you sure you want to delete this?";
+        module_Form.appendChild(title);
+        const moduletitle = document.createElement("h4");
+        moduletitle.textContent = "Module Name";
+        module_Form.appendChild(moduletitle);
+        const modulename = document.createElement("p");
+        modulename.textContent = module["name"];
+        module_Form.appendChild(modulename);
+        const enrolledtitle = document.createElement("h4");
+        enrolledtitle.textContent = "Enrolled Users";
+        module_Form.appendChild(enrolledtitle);
+        const enrolledul = document.createElement("ul");
+        enrolledul.classList.add("list-group", "w-75", "m-auto");
+        enrolledul.id = "denrolledul";
+        const enrolledli = document.createElement("li");
+        enrolledli.classList.add("list-group-item");
+        enrolledli.textContent = "None";
+        enrolledul.appendChild(enrolledli);
+        module_Form.appendChild(enrolledul);
+        const leadertitle = document.createElement("h4");
+        leadertitle.textContent = "Module Leader";
+        module_Form.appendChild(leadertitle);
+        const leadername = document.createElement("p");
+        leadername.textContent = module["leader"];
+        module_Form.appendChild(leadername);
+        const timetabletitle = document.createElement("h4");
+        timetabletitle.textContent = "Timetable";
+        module_Form.appendChild(timetabletitle);
+        const timetable = document.createElement("input");
+        timetable.classList.add("form-control", "w-75", "m-auto");
+        timetable.type = "datetime-local";
+        timetable.id = "dtimetable";
+        timetable.placeholder = "Select Timetable"
+        module_Form.appendChild(timetable);
+        const fp = flatpickr("#dtimetable", {
+            mode: "multiple",
+            enableTime: true,
+            inline: true
+        })
+        const deletebutton = document.createElement("button");
+        deletebutton.classList.add("btn", "btn-outline-danger", "w-75");
+        deletebutton.type = "button";
+        deletebutton.id = "dbutton";
+        deletebutton.textContent = "Delete Module";
+        module_Form.appendChild(deletebutton);
+        authModLogic.deleteModule(fp, module);
+    }
+
+    private moduleDataInput(titleName: string) {
+        const module_Form = this.getModuleForm();
+        const title = document.createElement("h2");
+        title.textContent = titleName;
         module_Form.appendChild(title);
         this.addBreakpoint(module_Form);
-        const cmnameinput = document.createElement("input");
-        cmnameinput.type = "text";
-        cmnameinput.classList.add("form-control", "w-75", "m-auto");
-        cmnameinput.id = "cmnameinput";
-        cmnameinput.placeholder = "Module Name";
-        module_Form.appendChild(cmnameinput);
-        const cmnamelabel = document.createElement("label");
-        cmnamelabel.htmlFor = "cmnameinput";
-        module_Form.appendChild(cmnamelabel);
+        const nameinput = document.createElement("input");
+        nameinput.type = "text";
+        nameinput.classList.add("form-control", "w-75", "m-auto");
+        nameinput.id = "mnnameinput";
+        nameinput.placeholder = "Module Name";
+        module_Form.appendChild(nameinput);
+        const namelabel = document.createElement("label");
+        namelabel.htmlFor = "mnnameinput";
+        module_Form.appendChild(namelabel);
         this.addBreakpoint(module_Form);
-        const ulcmname = document.createElement("ul");
-        ulcmname.classList.add("list-group", "w-75", "m-auto");
-        ulcmname.id = "ulcmname";
-        const licmname = document.createElement("li");
-        licmname.classList.add("list-group-item");
-        licmname.textContent = "None";
-        ulcmname.appendChild(licmname);
-        module_Form.appendChild(ulcmname);
+        const ulname = document.createElement("ul");
+        ulname.classList.add("list-group", "w-75", "m-auto");
+        ulname.id = "mnulname";
+        const liname = document.createElement("li");
+        liname.classList.add("list-group-item");
+        liname.textContent = "None";
+        ulname.appendChild(liname);
+        module_Form.appendChild(ulname);
         this.addBreakpoint(module_Form);
-        const cmenrolledinput = document.createElement("input");
-        cmenrolledinput.type = "text";
-        cmenrolledinput.classList.add("form-control", "w-75", "m-auto");
-        cmenrolledinput.id = "cmenrolledinput";
-        cmenrolledinput.placeholder = "Enter enrolled users";
-        module_Form.appendChild(cmenrolledinput);
-        const cmenrolledlabel = document.createElement("label");
-        cmenrolledlabel.htmlFor = "cmenrolledinput";
-        module_Form.appendChild(cmenrolledlabel);
+        const enrolledinput = document.createElement("input");
+        enrolledinput.type = "text";
+        enrolledinput.classList.add("form-control", "w-75", "m-auto");
+        enrolledinput.id = "mnenrolledinput";
+        enrolledinput.placeholder = "Enter enrolled users";
+        module_Form.appendChild(enrolledinput);
+        const enrolledlabel = document.createElement("label");
+        enrolledlabel.htmlFor = "mnenrolledinput";
+        module_Form.appendChild(enrolledlabel);
         this.addBreakpoint(module_Form);
-        const cmadduserbutton = document.createElement("button");
-        cmadduserbutton.classList.add("btn", "btn-outline-dark", "w-75", "chhbutton");
-        cmadduserbutton.type = "button";
-        cmadduserbutton.id = "cmadduserbutton";
-        cmadduserbutton.textContent = "Add User";
-        module_Form.appendChild(cmadduserbutton);
+        const adduserbutton = document.createElement("button");
+        adduserbutton.classList.add("btn", "btn-outline-dark", "w-75", "chhbutton");
+        adduserbutton.type = "button";
+        adduserbutton.id = "mnadduserbutton";
+        adduserbutton.textContent = "Add User";
+        module_Form.appendChild(adduserbutton);
         this.addBreakpoint(module_Form);
         this.addBreakpoint(module_Form);
-        const cmleaderinput = document.createElement("input");
-        cmleaderinput.type = "text";
-        cmleaderinput.classList.add("form-control", "w-75", "m-auto");
-        cmleaderinput.id = "cmleaderinput";
-        cmleaderinput.placeholder = "Module Leader";
-        module_Form.appendChild(cmleaderinput);
-        const cmleaderlabel = document.createElement("label");
-        cmleaderlabel.htmlFor = "cmleaderinput";
-        module_Form.appendChild(cmleaderlabel);
+        const leaderinput = document.createElement("input");
+        leaderinput.type = "text";
+        leaderinput.classList.add("form-control", "w-75", "m-auto");
+        leaderinput.id = "mnleaderinput";
+        leaderinput.placeholder = "Module Leader";
+        module_Form.appendChild(leaderinput);
+        const leaderlabel = document.createElement("label");
+        leaderlabel.htmlFor = "mnleaderinput";
+        module_Form.appendChild(leaderlabel);
         this.addBreakpoint(module_Form);
-        const cmtimetable = document.createElement("input");
-        cmtimetable.classList.add("form-control", "w-75", "m-auto");
-        cmtimetable.type = "datetime-local";
-        cmtimetable.id = "cmtimetable";
-        cmtimetable.placeholder = "Select Timetable"
-        module_Form.appendChild(cmtimetable);
+        const timetable = document.createElement("input");
+        timetable.classList.add("form-control", "w-75", "m-auto");
+        timetable.type = "datetime-local";
+        timetable.id = "mntimetable";
+        timetable.placeholder = "Select Timetable"
+        module_Form.appendChild(timetable);
         this.addBreakpoint(module_Form);
-        const cmsubmitbutton = document.createElement("button");
-        cmsubmitbutton.classList.add("btn", "btn-outline-dark", "w-75", "chhbutton");
-        cmsubmitbutton.type = "button";
-        cmsubmitbutton.id = "cmsubmitbutton";
-        cmsubmitbutton.textContent = "Submit"
-        module_Form.appendChild(cmsubmitbutton);
+        const submitbutton = document.createElement("button");
+        submitbutton.classList.add("btn", "btn-outline-dark", "w-75", "chhbutton");
+        submitbutton.type = "button";
+        submitbutton.id = "mnsubmitbutton";
+        submitbutton.textContent = "Submit"
+        module_Form.appendChild(submitbutton);
 
-        const fp = flatpickr("#cmtimetable", {
+        const fp = flatpickr("#mntimetable", {
             mode: "multiple",
-            enableTime: true
+            enableTime: true,
+            inline: true
         })
 
-        authModLogic.createModule(fp);
+        return fp;
     }
 
-    editModule() {
+    dashboardModule() {
         const module_Form = this.getModuleForm();
-        this.selectExistingModule(module_Form, "Modify an existing module", "Select Module");
+        const title = document.createElement("h2");
+        title.textContent = "Dashboard";
+        module_Form.appendChild(title);
 
-        authModLogic.getModules();
-    }
-
-    deleteModule() {
-        const module_Form = this.getModuleForm();
-        this.selectExistingModule(module_Form, "Delete an existing module", "Select Module");
+        authModLogic.dashboardModule();
     }
 }

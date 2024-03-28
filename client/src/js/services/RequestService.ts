@@ -118,4 +118,26 @@ export class RequestService {
             console.error(e);
         }
     }
+
+    async FetchDELETERequest(url: string): Promise<boolean> {
+        try {
+            const response = await fetch(url, {
+                method: "DELETE",
+                credentials: "include",
+                headers: {
+                    "Accept": "application/text",
+                    "Content-Type": "application/text"
+                }
+            });
+
+            switch (response.status) {
+                case 200:
+                    return true;
+                default:
+                    return false;
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
 }

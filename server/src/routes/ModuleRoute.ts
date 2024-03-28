@@ -41,3 +41,33 @@ moduleRoute.get('/list', async (c) => {
        return c.text(Errors.APIError);
    }
 });
+
+moduleRoute.post('/update', async (c) => {
+    try {
+        const body: JSON = JSON.parse(await c.req.text());
+        await mongo.updateModule(body["name"], body["data"]);
+        return c.text(Logs.ModuleCreation);
+    } catch {
+        console.error(Errors.CodeError);
+        c.status(500);
+        return c.text(Errors.APIError);
+    }
+});
+
+
+
+moduleRoute.delete('delete/:name', async (c) => {
+    try {
+        console.log(c.req.param('name'));
+        if(await mongo.deleteModule(c.req.param('name'))) {
+            return c.text(Logs.ModuleDelete);
+        } else {
+            c.status(400);
+            return c.text(Errors.NoModuleExists);
+        }
+    } catch {
+        console.error(Errors.CodeError);
+        c.status(500);
+        return c.text(Errors.APIError);
+    }
+})
