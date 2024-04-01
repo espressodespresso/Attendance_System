@@ -13,6 +13,7 @@ export const Errors = {
     NoAuthToken: "No Auth Token Received",
     NoRefreshToken: "No Refresh Token Received",
     APIError: "API Error Occurred!",
+    NoAccount: "Account credentials not found",
     // ModuleRoute
     ModuleCreation: "Error while inserting module",
     NoModuleLeader: "User entered does not exist",

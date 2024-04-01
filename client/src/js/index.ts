@@ -8,14 +8,18 @@ import {loadModules} from "./modules";
 const fpPromise = FingerprintJS.load();
 
 async function loadItems() {
-    await verifyPayload();
+    const payload = await verifyPayload();
     switch (window.location.pathname) {
         case "/attendance_system/client/src/modules.html":
-            await loadModules();
+            await loadModules(payload);
+            break;
+        case "/attendance_system/client/src/index.html":
+            new HomeComponent(payload);
+            break;
     }
 }
 
-async function verifyPayload() {
+async function verifyPayload(): Promise<object> {
     let payload = await getPayloadData();
     switch (payload["status"]) {
         case 200:
@@ -26,7 +30,7 @@ async function verifyPayload() {
                 insert();
             }
 
-            break;
+            return payload;
 
         case 401:
             if(document.title !== "Login") {
@@ -38,6 +42,7 @@ async function verifyPayload() {
         case 500:
             window.location.href = "/attendance_system/client/src/login.html"
             console.error("API Error");
+            break;
     }
 
     if(document.title === "Login") {

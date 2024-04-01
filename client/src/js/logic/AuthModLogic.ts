@@ -40,6 +40,10 @@ export class AuthModLogic {
                 const listgroupitem = document.createElement("li");
                 listgroupitem.classList.add("list-group-item");
                 listgroupitem.textContent = user;
+                listgroupitem.addEventListener("dblclick", async () => {
+                    users.splice(users.indexOf(user));
+                    listgroupitem.parentNode.removeChild(listgroupitem);
+                });
                 list_group.appendChild(listgroupitem);
                 addUserTextBox.value = "";
             } else {
@@ -139,7 +143,12 @@ export class AuthModLogic {
         for(let i = 0; i < users.length; i++) {
             const listgroupitem = document.createElement("li");
             listgroupitem.classList.add("list-group-item");
-            listgroupitem.textContent = users[i];
+            const username = users[i];
+            listgroupitem.textContent = username;
+            listgroupitem.addEventListener("dblclick", async () => {
+                users.splice(users.indexOf(username));
+                listgroupitem.parentNode.removeChild(listgroupitem);
+            });
             ulname.appendChild(listgroupitem);
         }
 

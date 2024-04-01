@@ -61,8 +61,24 @@ export class MongoService {
         }
     }
 
+    async userInfoUsername(username: string) {
+        try {
+            await this.client.connect();
+            const query = { username: username }
+            const account = await this.usersCollection.findOne(query);
+            if(account) {
+                console.log(Logs.DataRetrieval);
+                return account;
+            } else {
+                console.error(Errors.InvalidAccount);
+            }
+        } finally {
+            await this.client.close();
+        }
+    }
+
     async createAccount(username:string, password: string, role: Role, first_name: string,
-                        last_name: string, module_list: object, options: object) {
+                        last_name: string, module_list: string[], options: object) {
         try {
             await this.client.connect();
             const user = {
@@ -182,6 +198,22 @@ export class MongoService {
         }
     }
 
+    async updateUser(username: string, update: object): Promise<boolean> {
+        try {
+            await this.client.connect();
+            const query = { username: username };
+            const data = await this.usersCollection.updateOne(query, update);
+            this.resultVerification(data, Logs.AccountUpdate, Errors.NoAccount);
+            if(data.modifiedCount === 1) {
+                return true;
+            }
+
+            return false;
+        } finally {
+            await this.client.close();
+        }
+    }
+
     async verifyModuleExists(module_name: string): Promise<boolean> {
         try {
             await this.client.connect();
@@ -220,6 +252,21 @@ export class MongoService {
             await this.client.connect();
             const data = await this.moduleCollection.find({}).toArray();
             return data;
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async loadModule(module_name: string) {
+        try {
+            await this.client.connect();
+            const query = { name: module_name };
+            const data = await this.moduleCollection.findOne(query);
+            if(data != null) {
+                return data;
+            }
+
+            return null;
         } finally {
             await this.client.close();
         }

@@ -130,10 +130,19 @@ accountRoute.get('/verify/:username', async (c) => {
 
         console.log("User doesn't exist");
         return c.json({ valid: false })
-    } catch (e) {
-        console.error(e);
+    } catch {
         console.error(Errors.CodeError);
         c.status(500);
         return c.text(Errors.APIError);
     }
+});
+
+accountRoute.get('/update/:username', async (c) => {
+   try {
+
+   } catch {
+       console.error(Errors.CodeError);
+       c.status(500);
+       return c.text(Errors.APIError);
+   }
 });

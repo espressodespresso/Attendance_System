@@ -6,8 +6,7 @@ import {getPayloadData} from "./services/AuthService";
 
 let moduleComponent = null;
 
-export async function loadModules() {
-    const payload = await getPayloadData();
+export async function loadModules(payload: object) {
     const userInfo = payload["json"]["userinfo"];
     switch (userInfo["role"]) {
         case Role.Student:

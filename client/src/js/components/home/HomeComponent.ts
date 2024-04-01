@@ -1,4 +1,5 @@
 import {Role} from "../../enums/Role.enum";
+import {HomeLogic} from "../../logic/HomeLogic";
 
 export class HomeComponent {
     private side_container_title: HTMLElement;
@@ -11,7 +12,7 @@ export class HomeComponent {
     private side_container_tab3_content: HTMLElement;
     private index_container_form: HTMLElement;
 
-    constructor(role: Role) {
+    constructor(payload: object) {
         // Side Container Title
         this.side_container_title = document.getElementById("index-side-container-title");
         this.side_container_title_sub = document.getElementById("index-side-container-title-sub")
@@ -29,17 +30,25 @@ export class HomeComponent {
         this.index_container_form = document.getElementById("index-content-container-form");
 
         // Generate Container Features
-        switch (role) {
+        switch (payload["json"]["userinfo"]["role"]) {
             case Role.Student:
                 this.userFeatures();
                 break;
             case Role.Lecturer:
                 this.authFeatures();
                 break;
-            default:
+            case Role.AdministrativeFM:
                 this.authFeatures();
                 break;
+            case Role.IT:
+                this.authFeatures();
+                break;
+            default:
+                this.userFeatures();
+                break;
         }
+
+        new HomeLogic(this, payload);
     }
 
     private userFeatures() {
@@ -84,6 +93,7 @@ export class HomeComponent {
         this.index_container_form.appendChild(h2);
         this.addBreakpoint(this.index_container_form);
         const ul = document.createElement("ul");
+        ul.id = "hullist"
         ul.classList.add("list-group", "w-75", "m-auto");
         const li = document.createElement("li");
         li.classList.add("list-group-item");

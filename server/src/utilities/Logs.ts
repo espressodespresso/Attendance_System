@@ -11,6 +11,7 @@ export const Logs = {
     AccountRoute: "Account route executed successfully",
     AccountAuthRoute: "Account auth route executed successfully",
     AccountRefreshRoute: "Account refresh route executed successfully",
+    AccountUpdate: "Account route update executed successfully",
     // ModuleRoute
     ModuleCreation: "Module created successfully",
     ModuleUpdate: "Module updated successfully",
