@@ -90,6 +90,7 @@ export class HomeComponent {
         // Generate Registration Code UI
         const h2 = document.createElement("h2");
         h2.textContent = "Select a Module";
+        h2.id = "hh2";
         this.index_container_form.appendChild(h2);
         this.addBreakpoint(this.index_container_form);
         const ul = document.createElement("ul");
@@ -104,7 +105,7 @@ export class HomeComponent {
         const selectButton = document.createElement("button");
         selectButton.classList.add("btn", "btn-outline-dark", "w-75");
         selectButton.type = "button";
-        selectButton.id = "cmsubmitbutton";
+        selectButton.id = "hsubmitbutton";
         selectButton.textContent = "Select Module";
         this.index_container_form.appendChild(selectButton)
     }

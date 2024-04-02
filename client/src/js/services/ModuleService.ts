@@ -37,6 +37,17 @@ export async function loadModules(): Promise<object[]> {
     }
 }
 
+export async function loadModule(moduleName: string) {
+    const loadModuleURL = 'http://localhost:8080/module/' + moduleName;
+    try {
+        const data = await requestService.FetchGETRequest(loadModuleURL, Accept.JSON);
+        return data["json"];
+
+    } catch (e) {
+        console.error("No Tokens");
+    }
+}
+
 export async function updateModule(moduleName: string, data: object) {
     const updateModuleURL = 'http://localhost:8080/module/update';
     try {

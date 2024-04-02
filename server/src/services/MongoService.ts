@@ -4,6 +4,7 @@ import {decode, verify} from 'hono/jwt'
 import {AuthState} from "../enums/AuthState.enum";
 import {Logs} from "../utilities/Logs";
 import {Errors} from "../utilities/Errors";
+import {generateCode, updateUserAttendance} from "./AttendanceService";
 
 export class MongoService {
     //private client = new MongoClient(process.env["MONGOURI "]);
@@ -12,6 +13,7 @@ export class MongoService {
     private usersCollection = this.database.collection('users');
     private tokenCollection = this.database.collection('tokens');
     private moduleCollection = this.database.collection('module');
+    private attendanceCollection = this.database.collection('attendance');
 
     async login(username: string, password: string) {
         try {
@@ -295,6 +297,140 @@ export class MongoService {
             return false;
         } finally {
             await this.client.close()
+        }
+    }
+
+    //
+
+    async locateActiveCode(code: number): Promise<object> {
+        try {
+            await this.client.connect();
+            const query = { active_code: code };
+            const data = this.attendanceCollection.findOne(query);
+            if(data != null) {
+                return data;
+            }
+
+            return null;
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async generateAttendanceCode(module_name: string, date: Date): Promise<number> {
+        try {
+            await this.client.connect();
+            const attended: string[] = [];
+            let code: number = null;
+            while(code === null) {
+                let temp = generateCode();
+                if(await this.locateActiveCode(temp) === null) {
+                    code = temp;
+                }
+            }
+
+            const attendance = {
+                active_code: code,
+                module: module_name,
+                date: date,
+                attended: attended
+            }
+            const data = await this.attendanceCollection.insertOne(attendance);
+            this.resultVerification(data, Logs.CodeGenerated, Errors.CodeGenerated);
+            return code;
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async terminateActiveAttendance(active_code: number): Promise<boolean> {
+        try {
+            await this.client.connect();
+            const prevdata: object = await this.locateActiveCode(active_code);
+            if(prevdata !== null) {
+                const attended = prevdata["attended"];
+                const attendance = {
+                    used_code: active_code,
+                    module: prevdata["module"],
+                    data: prevdata["data"],
+                    attended: attended
+                }
+                const query = { active_code: active_code }
+                const data = await this.attendanceCollection.replaceOne(query, attendance);
+                this.resultVerification(data, Logs.CodeTerminated, Errors.CodeTerminated);
+                return true;
+            }
+
+            return false;
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async attendActiveAttendance(active_code: number, username: string): Promise<object> {
+        try {
+            await this.client.connect();
+            const attendanceData: object = await this.locateActiveCode(active_code);
+            if(attendanceData !== null) {
+                const moduleName = attendanceData["module"];
+                const moduleData = await this.loadModule(moduleName);
+                if((moduleData["enrolled"] as string[]).includes(username)) {
+                    const attended: string[] = attendanceData["attended"];
+                    if(!attended.includes(username)) {
+                        attended.push(username);
+                        const update = {
+                            $set: {
+                                attended: attended
+                            },
+                        };
+                        const query = { active_code: active_code };
+                        const data = await this.attendanceCollection.updateOne(query, update);
+                        if(data.modifiedCount === 1) {
+                            const userData = this.userInfoUsername(username);
+                            const attendance: object[] = userData["attendance"];
+                            if(await updateUserAttendance(username, attendance, moduleName, attendanceData["date"])) {
+                                return this.aaaObjectReturn(true, Logs.UserAttended);
+                            }
+                            return this.aaaObjectReturn(false, Errors.UserUpdateAttendance);
+                        }
+
+                        return this.aaaObjectReturn(false, Errors.AttendanceModification);
+                    } else {
+                        return this.aaaObjectReturn(false, Errors.AttendedPreviously);
+                    }
+                } else {
+                    return this.aaaObjectReturn(false, Errors.NotEnrolled);
+                }
+            }
+
+            return this.aaaObjectReturn(false, Errors.NoAttendanceCode);
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    private aaaObjectReturn(status: boolean, message: string) {
+        return {
+            status: status,
+            message: message
+        };
+    }
+
+    async locateAttended(module_name: string, date: Date): Promise<object> {
+        try {
+            await this.client.connect();
+            const query = {
+                module: module_name,
+                date: date
+            };
+            const data = this.attendanceCollection.findOne(query);
+            if(data != null) {
+                return data;
+            }
+
+            return null;
+        } finally {
+            await this.client.close();
         }
     }
 

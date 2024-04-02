@@ -15,5 +15,9 @@ export const Logs = {
     // ModuleRoute
     ModuleCreation: "Module created successfully",
     ModuleUpdate: "Module updated successfully",
-    ModuleDelete: "Module deleted successfully"
+    ModuleDelete: "Module deleted successfully",
+    // AttendanceRoute
+    CodeGenerated: "Code generated for module",
+    CodeTerminated: "Code terminated for module",
+    UserAttended: "User successfully attended"
 }

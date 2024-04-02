@@ -2,6 +2,7 @@ import {verifyUserExists} from "../services/AuthService";
 import {createModule, deleteModule, loadModules, updateModule} from "../services/ModuleService";
 import {AuthorativeModule} from "../components/modules/AuthModComponent";
 import {ModuleAction} from "../enums/ModuleAction.enum";
+import {selectListGroupItemString} from "../utils/Utils";
 
 export class AuthModLogic {
     private authModule: AuthorativeModule = null;
@@ -92,18 +93,7 @@ export class AuthModLogic {
             const idName = moduleName.split(" ").join("");
             listgroupitem.id = idName;
             listgroupitem.addEventListener("click", () => {
-                if(this.selectedModule === null) {
-                    listgroupitem.classList.add("list-group-item-dark");
-                    this.selectedModule = listgroupitem.textContent;
-                } else if(listgroupitem.textContent === this.selectedModule) {
-                    listgroupitem.classList.remove("list-group-item-dark");
-                    this.selectedModule = null;
-                } else {
-                    const selected = document.getElementById(this.selectedModule.split(" ").join(""));
-                    selected.classList.remove("list-group-item-dark");
-                    listgroupitem.classList.add("list-group-item-dark");
-                    this.selectedModule = listgroupitem.textContent;
-                }
+                this.selectedModule = selectListGroupItemString(listgroupitem, this.selectedModule);
             });
             listgroup.appendChild(listgroupitem);
         }

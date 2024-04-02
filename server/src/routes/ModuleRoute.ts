@@ -50,6 +50,19 @@ moduleRoute.get('/list', async (c) => {
    }
 });
 
+moduleRoute.get(':name', async (c) => {
+   try {
+       const data = await mongo.loadModule(c.req.param('name'));
+       if(data != null) {
+           return c.json(data);
+       }
+   }  catch {
+       console.error(Errors.CodeError);
+       c.status(500);
+       return c.text(Errors.APIError);
+   }
+});
+
 moduleRoute.post('/update', async (c) => {
     try {
         const body: JSON = JSON.parse(await c.req.text());
@@ -97,7 +110,6 @@ moduleRoute.post('/update', async (c) => {
 
 moduleRoute.delete('delete/:name', async (c) => {
     try {
-        console.log(c.req.param('name'));
         if(await mongo.deleteModule(c.req.param('name'))) {
             return c.text(Logs.ModuleDelete);
         } else {

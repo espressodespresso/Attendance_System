@@ -4,6 +4,7 @@ import { loginRoute } from "./routes/LoginRoute";
 import { cors } from 'hono/cors'
 import { accountRoute } from "./routes/AccountRoute";
 import {moduleRoute} from "./routes/ModuleRoute";
+import {attendanceRoute} from "./routes/AttendanceRoute";
 const dotenv = require('dotenv');
 const dotenvExpand = require('dotenv-expand');
 
@@ -37,6 +38,15 @@ app.use('/module/*', cors({
     allowMethods: ['GET', 'POST', 'DELETE'],
 }));
 app.route('/module', moduleRoute);
+
+app.use('/attendance/*', cors({
+    origin: ['http://localhost:63342', 'http://localhost:8080'],
+    allowHeaders: ['Content-Type', 'Accept', 'Authorization'],
+    credentials: true,
+    exposeHeaders: ['Set-Cookie'],
+    allowMethods: ['GET', 'POST'],
+}));
+app.route('/module', attendanceRoute);
 
 serve({
     fetch: app.fetch,

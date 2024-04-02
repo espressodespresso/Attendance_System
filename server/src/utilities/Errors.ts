@@ -18,5 +18,14 @@ export const Errors = {
     ModuleCreation: "Error while inserting module",
     NoModuleLeader: "User entered does not exist",
     ModuleExists: "The module name entered already exists",
-    NoModuleExists: "The module searched does not exist"
+    NoModuleExists: "The module searched does not exist",
+    // AttendanceRoute
+    CodeGenerated: "Code unable to generate for module",
+    CodeTerminated: "Code unable to terminate for module",
+    AttendanceModification: "Module was unable to be modified, contact system administrator",
+    AttendedPreviously: "User has already attended previously",
+    NotEnrolled: "User is not enrolled in this module",
+    NoAttendanceCode: "The attendance code provided does not exist",
+    UserUpdateAttendance: "Unable to update user attendance array",
+    LocateAttendance: "Unable to locate attendance details specified"
 }
