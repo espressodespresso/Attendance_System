@@ -3,7 +3,7 @@ import {Hono} from "hono";
 import {Errors} from "../utilities/Errors";
 import {moduleRoute} from "./ModuleRoute";
 import {Logs} from "../utilities/Logs";
-import {decode} from "hono/dist/types/middleware/jwt";
+import {decode} from "hono/jwt";
 
 const mongo = new MongoService();
 export const attendanceRoute = new Hono();
@@ -14,8 +14,7 @@ function getParam(c, name: string) {
 
 attendanceRoute.get('/take/:name/:date', async (c) => {
     try{
-        let active_code: number = await mongo.generateAttendanceCode(getParam(c, 'name')
-            , getParam(c, 'date'));
+        let active_code: number = await mongo.generateAttendanceCode(getParam(c, 'name'), getParam(c, 'date'));
         return c.json({active_code: active_code});
     } catch {
         console.error(Errors.CodeError);
@@ -26,7 +25,9 @@ attendanceRoute.get('/take/:name/:date', async (c) => {
 
 attendanceRoute.get('/end/:code', async (c) => {
     try{
+        console.log("Im here :0");
         if(await mongo.terminateActiveAttendance(getParam(c, 'code'))) {
+            console.log("Code terminated");
             return c.text(Logs.CodeTerminated);
         }
 
@@ -53,10 +54,10 @@ attendanceRoute.post('/attend/:code', async (c) => {
         const response: object = await mongo.attendActiveAttendance(getParam(c, 'code'), username);
         if(!response["status"]) {
             c.status(400);
-            return c.json(JSON.stringify(response));
+            return c.json(JSON.stringify(response["message"]));
         }
 
-        return c.json(JSON.stringify(response));
+        return c.json(JSON.stringify(response["message"]));
     } catch {
         console.error(Errors.CodeError);
         c.status(500);

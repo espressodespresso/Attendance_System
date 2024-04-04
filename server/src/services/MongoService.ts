@@ -302,19 +302,16 @@ export class MongoService {
 
     //
 
-    async locateActiveCode(code: number): Promise<object> {
-        try {
-            await this.client.connect();
-            const query = { active_code: code };
-            const data = this.attendanceCollection.findOne(query);
-            if(data != null) {
-                return data;
-            }
-
-            return null;
-        } finally {
-            await this.client.close();
+    // Only to be used within another mongo function
+    private async locateActiveCode(code: number): Promise<object> {
+        const query = { active_code: code };
+        const data = await this.attendanceCollection.findOne(query);
+        console.log("found data " + data);
+        if(data != null) {
+            return data;
         }
+
+        return null;
     }
 
     async generateAttendanceCode(module_name: string, date: Date): Promise<number> {
@@ -329,10 +326,11 @@ export class MongoService {
                 }
             }
 
+            console.log("Code Generated - " + code);
             const attendance = {
-                active_code: code,
+                active_code: code.toString(),
                 module: module_name,
-                date: date,
+                date: new Date(date).toISOString(),
                 attended: attended
             }
             const data = await this.attendanceCollection.insertOne(attendance);
@@ -349,10 +347,11 @@ export class MongoService {
             const prevdata: object = await this.locateActiveCode(active_code);
             if(prevdata !== null) {
                 const attended = prevdata["attended"];
+                console.log(attended);
                 const attendance = {
-                    used_code: active_code,
+                    used_code: active_code.toString(),
                     module: prevdata["module"],
-                    data: prevdata["data"],
+                    date: prevdata["date"],
                     attended: attended
                 }
                 const query = { active_code: active_code }
@@ -374,31 +373,49 @@ export class MongoService {
             if(attendanceData !== null) {
                 const moduleName = attendanceData["module"];
                 const moduleData = await this.loadModule(moduleName);
+                console.log("1")
                 if((moduleData["enrolled"] as string[]).includes(username)) {
+                    console.log("2")
                     const attended: string[] = attendanceData["attended"];
                     if(!attended.includes(username)) {
+                        console.log("3")
                         attended.push(username);
                         const update = {
                             $set: {
                                 attended: attended
                             },
                         };
-                        const query = { active_code: active_code };
+                        console.log("4")
+                        console.log(attended.toString());
+                        const query = { active_code: active_code.toString() };
+                        console.log("4.5");
+                        // Needed for some reason, assuming it times out after loadmodule?
+                        await this.client.connect();
                         const data = await this.attendanceCollection.updateOne(query, update);
+                        console.log("5")
                         if(data.modifiedCount === 1) {
-                            const userData = this.userInfoUsername(username);
-                            const attendance: object[] = userData["attendance"];
+                            const userData = await this.userInfoUsername(username);
+                            console.log("6")
+                            console.log(userData);
+                            const attendance: object[] = userData["attended"];
+                            console.log(attendance.length + "ddd");
+                            console.log("7")
                             if(await updateUserAttendance(username, attendance, moduleName, attendanceData["date"])) {
+                                console.log("8")
                                 return this.aaaObjectReturn(true, Logs.UserAttended);
                             }
+                            console.log("err4")
                             return this.aaaObjectReturn(false, Errors.UserUpdateAttendance);
                         }
 
+                        console.log("err3")
                         return this.aaaObjectReturn(false, Errors.AttendanceModification);
                     } else {
+                        console.log("err2")
                         return this.aaaObjectReturn(false, Errors.AttendedPreviously);
                     }
                 } else {
+                    console.log("err1")
                     return this.aaaObjectReturn(false, Errors.NotEnrolled);
                 }
             }
@@ -421,7 +438,7 @@ export class MongoService {
             await this.client.connect();
             const query = {
                 module: module_name,
-                date: date
+                date: new Date(date).toISOString()
             };
             const data = this.attendanceCollection.findOne(query);
             if(data != null) {

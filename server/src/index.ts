@@ -46,7 +46,7 @@ app.use('/attendance/*', cors({
     exposeHeaders: ['Set-Cookie'],
     allowMethods: ['GET', 'POST'],
 }));
-app.route('/module', attendanceRoute);
+app.route('/attendance', attendanceRoute);
 
 serve({
     fetch: app.fetch,

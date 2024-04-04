@@ -1,9 +1,9 @@
 import {Hono} from "hono";
-import {MongoService} from "../services/MongoService";
 import {decode, sign} from "hono/jwt";
 import cookie from "cookie";
 import {Errors} from "../utilities/Errors";
 import {Logs} from "../utilities/Logs";
+import {MongoService} from "../services/MongoService";
 
 const mongo = new MongoService();
 export const accountRoute = new Hono();

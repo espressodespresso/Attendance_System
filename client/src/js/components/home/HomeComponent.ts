@@ -1,5 +1,6 @@
 import {Role} from "../../enums/Role.enum";
 import {HomeLogic} from "../../logic/HomeLogic";
+import {AttendanceComponent} from "../AttendanceComponent";
 
 export class HomeComponent {
     private side_container_title: HTMLElement;
@@ -10,7 +11,10 @@ export class HomeComponent {
     private side_container_tab2_content: HTMLElement;
     private side_container_tab3_title: HTMLElement;
     private side_container_tab3_content: HTMLElement;
-    private index_container_form: HTMLElement;
+    index_container_form: HTMLElement = null;
+
+    private homeLogic: HomeLogic = null;
+    private attendanceComponent: AttendanceComponent = null;
 
     constructor(payload: object) {
         // Side Container Title
@@ -29,26 +33,28 @@ export class HomeComponent {
         // Main Content Container Form
         this.index_container_form = document.getElementById("index-content-container-form");
 
+        // Init components
+        this.homeLogic = new HomeLogic();
+        this.attendanceComponent = new AttendanceComponent(this.index_container_form);
+
         // Generate Container Features
         switch (payload["json"]["userinfo"]["role"]) {
             case Role.Student:
                 this.userFeatures();
                 break;
             case Role.Lecturer:
-                this.authFeatures();
+                this.authFeatures(payload);
                 break;
             case Role.AdministrativeFM:
-                this.authFeatures();
+                this.authFeatures(payload);
                 break;
             case Role.IT:
-                this.authFeatures();
+                this.authFeatures(payload);
                 break;
             default:
                 this.userFeatures();
                 break;
         }
-
-        new HomeLogic(this, payload);
     }
 
     private userFeatures() {
@@ -58,59 +64,16 @@ export class HomeComponent {
         this.side_container_tab2_title.textContent = "Upcoming Lessons"
         this.side_container_tab3_title.textContent = "University Announcements";
 
-        // Registration UI
-        const h2 = document.createElement("h2");
-        h2.textContent = "Register for Lesson";
-        this.index_container_form.appendChild(h2);
-        this.index_container_form.appendChild(document.createElement("br"));
-        const input = document.createElement("input");
-        input.type = "text";
-        input.classList.add("form-control", "w-25", "mx-auto");
-        input.id = "codeInput";
-        input.placeholder = "Code";
-        this.index_container_form.appendChild(input);
-        const label = document.createElement("label");
-        label.htmlFor = "codeInput";
-        this.index_container_form.appendChild(label);
-        this.index_container_form.appendChild(document.createElement("br"));
-        const button = document.createElement("button");
-        button.type = "button";
-        button.classList.add("btn", "btn-outline-dark", "w-25");
-        button.textContent = "Submit";
-        this.index_container_form.appendChild(button);
+        this.attendanceComponent.userAttendanceComponent();
     }
 
-    private authFeatures() {
+    private authFeatures(payload: object) {
         this.side_container_title.textContent = "Welcome Back"
         this.side_container_title_sub.textContent = "Let's catch up on what's been happening";
         this.side_container_tab1_title.textContent = "Module Attendance Trend"
         this.side_container_tab2_title.textContent = "Upcoming Lessons"
         this.side_container_tab3_title.textContent = "University Announcements";
 
-        // Generate Registration Code UI
-        const h2 = document.createElement("h2");
-        h2.textContent = "Select a Module";
-        h2.id = "hh2";
-        this.index_container_form.appendChild(h2);
-        this.addBreakpoint(this.index_container_form);
-        const ul = document.createElement("ul");
-        ul.id = "hullist"
-        ul.classList.add("list-group", "w-75", "m-auto");
-        const li = document.createElement("li");
-        li.classList.add("list-group-item");
-        li.textContent = "None";
-        ul.appendChild(li);
-        this.index_container_form.appendChild(ul);
-        this.addBreakpoint(this.index_container_form);
-        const selectButton = document.createElement("button");
-        selectButton.classList.add("btn", "btn-outline-dark", "w-75");
-        selectButton.type = "button";
-        selectButton.id = "hsubmitbutton";
-        selectButton.textContent = "Select Module";
-        this.index_container_form.appendChild(selectButton)
-    }
-
-    private addBreakpoint(element: HTMLElement) {
-        element.appendChild(document.createElement("br"));
+        this.attendanceComponent.authAttendanceSelectComponent(payload);
     }
 }
