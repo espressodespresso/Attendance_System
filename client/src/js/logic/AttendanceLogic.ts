@@ -1,16 +1,19 @@
 import {attendActiveAttendance, generateAttendanceCode, terminateAttendanceCode} from "../services/AttendanceService";
 import {loadModule, loadModules} from "../services/ModuleService";
-import {selectListGroupItemDate, selectListGroupItemString} from "../utils/Utils";
 import {AttendanceComponent} from "../components/AttendanceComponent";
 import {Role} from "../enums/Role.enum";
+import {Utils} from "../utils/Utils";
+import {ModuleAction} from "../enums/ModuleAction.enum";
 
 export class AttendanceLogic {
     private attendanceComponent: AttendanceComponent = null;
-    private selectedModule: string = null;
+    selectedModule: string = null;
     private selectedDate: Date = null;
+    private utils: Utils = null;
 
     constructor(component: AttendanceComponent) {
         this.attendanceComponent = component;
+        this.utils = new Utils();
     }
 
     async attendanceAuthCodeComponent(module_name: string, date: Date) {
@@ -18,11 +21,11 @@ export class AttendanceLogic {
         const code = await generateAttendanceCode(module_name, date);
         codeh3.textContent = code.toString();
 
-        /*window.addEventListener('beforeunload', async function (e) {
+        window.addEventListener('beforeunload', async function (e) {
             e.preventDefault();
             console.log(await terminateAttendanceCode(code))
             e.returnValue = null;
-        })*/
+        })
     }
 
     attendanceUserCodeComponent() {
@@ -41,49 +44,59 @@ export class AttendanceLogic {
         const ul = document.getElementById("hullist") as HTMLUListElement;
         const userInfo = payload["json"]["userinfo"];
         let modules = userInfo["module_list"];
-        switch (userInfo["role"]) {
-            case Role.IT:
-            case Role.AdministrativeFM:
-                console.log("I'm here");
-                loadModules().then(result => {
+        loadModules().then(result => {
+            switch (userInfo["role"]) {
+                case Role.IT:
+                case Role.AdministrativeFM:
                     let globalModules: string[] = [];
                     result.map((module) => {
                         globalModules.push(module["name"]);
                     })
-                    console.log(globalModules);
                     modules = globalModules;
-                }).catch((e) => {
-                    console.error(e);
-                });
-                break;
-        }
-        if(modules.length > 0) {
-            ul.innerHTML = "";
-            for(let i = 0; i < modules.length; i++) {
-                const moduleName = modules[i];
-                const listgroupitem = document.createElement("li");
-                listgroupitem.classList.add("list-group-item");
-                listgroupitem.textContent = moduleName;
-                const idName = moduleName.split(" ").join("");
-                listgroupitem.id = idName;
-                listgroupitem.addEventListener("click", () => {
-                    this.selectedModule = selectListGroupItemString(listgroupitem, this.selectedModule);
-                })
-                ul.appendChild(listgroupitem);
+                    break;
             }
 
-            const submitButton = document.getElementById("hsubmitbutton");
-            submitButton.addEventListener("click", async () => {
-                if(this.selectedModule !== null) {
-                    await this.selectDate(this.selectedModule);
-                } else {
-                    console.error("No module selected");
+            if(modules.length > 0) {
+                ul.innerHTML = "";
+                for(let i = 0; i < modules.length; i++) {
+                    const moduleName = modules[i];
+                    const listgroupitem = document.createElement("li");
+                    listgroupitem.classList.add("list-group-item");
+                    listgroupitem.textContent = moduleName;
+                    const idName = moduleName.split(" ").join("");
+                    listgroupitem.id = idName;
+                    listgroupitem.addEventListener("click", () => {
+                        this.selectedModule = this.utils.selectListGroupItemString(listgroupitem, this.selectedModule);
+                    })
+                    ul.appendChild(listgroupitem);
                 }
-            })
-        }
+
+                const submitButton = document.getElementById("hsubmitbutton");
+                submitButton.addEventListener("click", async () => {
+                    if(this.selectedModule !== null) {
+                        await this.selectDate(this.selectedModule);
+                    } else {
+                        console.error("No module selected");
+                    }
+                })
+            }
+        }).catch((e) => {
+            console.error("Contact System Administrator \n" + e);
+        });
     }
 
-    private async selectDate(moduleName: string) {
+    submitModuleButton(utils: Utils, modules?: object[], action?: ModuleAction, component?: AttendanceLogic) {
+        const submitButton = document.getElementById("smsubmitbutton");
+        submitButton.addEventListener("click", async () => {
+            if(component.selectedModule !== null) {
+                await component.selectDate(component.selectedModule);
+            } else {
+                console.error("No module selected");
+            }
+        })
+    };
+
+    async selectDate(moduleName: string) {
         const data = await loadModule(moduleName);
         const h2 = document.getElementById("hh2");
         h2.textContent = moduleName + " : Select a Date";
@@ -101,7 +114,7 @@ export class AttendanceLogic {
                 listgroupitem.addEventListener("click", async () => {
                     //this.selectedDate = selectListGroupItem(listgroupitem, this.selectedDate)
                     //this.selectedDate = new Date(timetable[i])
-                    this.selectedDate = selectListGroupItemDate(listgroupitem, this.selectedDate);
+                    this.selectedDate = this.utils.selectListGroupItemDate(listgroupitem, this.selectedDate);
                 });
                 ul.appendChild(listgroupitem);
             }

@@ -74,6 +74,8 @@ export class HomeComponent {
         this.side_container_tab2_title.textContent = "Upcoming Lessons"
         this.side_container_tab3_title.textContent = "University Announcements";
 
-        this.attendanceComponent.authAttendanceSelectComponent(payload);
+        (async () => {
+            await this.attendanceComponent.authAttendanceSelectComponent(payload);
+        })();
     }
 }

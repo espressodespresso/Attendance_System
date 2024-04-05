@@ -13,13 +13,13 @@ export async function loadModules(payload: object) {
             moduleComponent = new UserModComponent();
             break;
         case Role.IT:
-            moduleComponent = new AuthorativeModule();
+            moduleComponent = new AuthorativeModule(payload);
             break;
         case Role.AdministrativeFM:
-            moduleComponent = new AuthorativeModule();
+            moduleComponent = new AuthorativeModule(payload);
             break;
         case Role.Lecturer:
-            moduleComponent = new AuthorativeModule();
+            moduleComponent = new AuthorativeModule(payload);
             break;
     }
 }

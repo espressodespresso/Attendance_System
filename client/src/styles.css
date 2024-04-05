@@ -48,6 +48,16 @@ h3 {
     font-size: 1vw;
 }
 
+.shift_right {
+    position: relative;
+    left: 20px;
+}
+
+.shift_left {
+    position: relative;
+    right: 20px;
+}
+
 #index-home-container {
     /*background: #4720b3;*/
     height: calc(100vh - 91.33px);
@@ -80,3 +90,43 @@ h3 {
         background-position: 0 50%;
     }
 }
+
+/* Spinner via https://www.youtube.com/watch?v=q76TexbMXJg Tutorial */
+
+.spinner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: white;
+    transition: opacity 0.75s, visibility 0.75s;
+}
+
+.spinner-hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.spinner::after {
+    content: "";
+    width: 85px;
+    height: 85px;
+    border: 15px solid rgba(255, 255, 255);
+    border-top-color: #b6014c;
+    border-radius: 50%;
+    animation: loading 0.75s ease infinite;
+}
+
+@keyframes loading {
+    from {
+        transform: rotate(0turn);
+    }
+    to {
+        transform: rotate(1turn);
+    }
+}
+

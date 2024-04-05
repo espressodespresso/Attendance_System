@@ -1,26 +1,25 @@
 import {verifyUserExists} from "../services/AuthService";
-import {createModule, deleteModule, loadModules, updateModule} from "../services/ModuleService";
+import {createModule, deleteModule, loadModule, loadModules, updateModule} from "../services/ModuleService";
 import {AuthorativeModule} from "../components/modules/AuthModComponent";
 import {ModuleAction} from "../enums/ModuleAction.enum";
-import {selectListGroupItemString} from "../utils/Utils";
+import {Role} from "../enums/Role.enum";
+import {Utils} from "../utils/Utils";
 
 export class AuthModLogic {
     private authModule: AuthorativeModule = null;
-    private selectedModule: string  = null;
-    private loadedModules: object[] = null;
 
-    constructor(component: AuthorativeModule) {
+    constructor(component: AuthorativeModule, payload: object) {
         const creatembutton = document.getElementById("creatembutton") as HTMLInputElement;
         creatembutton.addEventListener("click", function () {
             component.createModule();
         });
         const modifymbutton = document.getElementById("modifymbutton") as HTMLInputElement;
-        modifymbutton.addEventListener("click", function () {
-            component.selectExistingModule("Modify an existing module", "Select Module", ModuleAction.Modify);
+        modifymbutton.addEventListener("click", async function () {
+            await component.selectExistingModule("Modify an existing module", "Select Module", ModuleAction.Modify, payload);
         });
         const deletembutton = document.getElementById("deletembutton") as HTMLInputElement;
-        deletembutton.addEventListener("click", function () {
-            component.selectExistingModule("Delete an existing module", "Select Module", ModuleAction.Delete);
+        deletembutton.addEventListener("click", async function () {
+            await component.selectExistingModule("Delete an existing module", "Select Module", ModuleAction.Delete, payload);
         });
 
         this.authModule = component;
@@ -78,32 +77,15 @@ export class AuthModLogic {
         });
     }
 
-    async getModules(action: ModuleAction) {
-        this.loadedModules = await loadModules();
-        const listgroup = document.getElementById("selmodul");
-        if(this.loadedModules.length > 0) {
-            listgroup.innerHTML = "";
-        }
-        for(let i = 0; i < this.loadedModules.length; i++) {
-            const moduleData = this.loadedModules[i];
-            const moduleName: string = moduleData["name"];
-            const listgroupitem = document.createElement("li");
-            listgroupitem.classList.add("list-group-item");
-            listgroupitem.textContent = moduleName;
-            const idName = moduleName.split(" ").join("");
-            listgroupitem.id = idName;
-            listgroupitem.addEventListener("click", () => {
-                this.selectedModule = selectListGroupItemString(listgroupitem, this.selectedModule);
-            });
-            listgroup.appendChild(listgroupitem);
-        }
-
+    submitButton(utils: Utils, modules: object[], action?: ModuleAction, component?: AuthorativeModule) {
         const submitbuttom = document.getElementById("smsubmitbutton");
         submitbuttom.addEventListener("click", () => {
+            console.log("here " + utils.selectedModule);
             let module: object = null;
-            for(let i = 0; i < this.loadedModules.length; i++) {
-                const moduleData = this.loadedModules[i];
-                if(moduleData["name"] === this.selectedModule) {
+            for(let i = 0; i < modules.length; i++) {
+                const moduleData = modules[i];
+                console.log(moduleData);
+                if(moduleData["name"] === utils.selectedModule) {
                     module = moduleData;
                     break;
                 }
@@ -114,10 +96,12 @@ export class AuthModLogic {
             } else {
                 switch (action) {
                     case ModuleAction.Modify:
-                        this.authModule.editModule(module);
+                        console.log(module);
+                        component.editModule(module);
                         break;
                     case ModuleAction.Delete:
-                        this.authModule.deleteModule(module);
+                        console.log(module);
+                        component.deleteModule(module);
                         break;
                 }
             }
@@ -126,6 +110,7 @@ export class AuthModLogic {
 
     editModule(fp: any, module: object) {
         const nameinput = document.getElementById("mnnameinput") as HTMLInputElement;
+        console.log(module);
         nameinput.value = module["name"];
         const ulname = document.getElementById("mnulname");
         ulname.innerHTML = "";

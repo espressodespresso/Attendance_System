@@ -4,6 +4,7 @@ import {HomeComponent} from "./components/home/HomeComponent";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import {AuthorativeModule} from "./components/modules/AuthModComponent";
 import {loadModules} from "./modules";
+import {AnalyticsComponent} from "./components/AnalyticsComponent";
 
 const fpPromise = FingerprintJS.load();
 
@@ -16,7 +17,15 @@ async function loadItems() {
         case "/attendance_system/client/src/index.html":
             new HomeComponent(payload);
             break;
+        case "/attendance_system/client/src/analytics.html":
+            new AnalyticsComponent(payload);
+            break;
     }
+    const spinner = document.getElementById("spinner");
+    spinner.classList.add("spinner-hidden");
+    spinner.addEventListener("transitionend", () => {
+        spinner.parentNode.removeChild(spinner);
+    });
 }
 
 async function verifyPayload(): Promise<object> {

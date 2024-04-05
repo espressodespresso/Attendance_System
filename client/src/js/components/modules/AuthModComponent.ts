@@ -2,11 +2,13 @@ import flatpickr from "flatpickr";
 import {AuthModLogic} from "../../logic/AuthModLogic";
 import {ModuleAction} from "../../enums/ModuleAction.enum";
 import * as timers from "timers";
+import {Utils} from "../../utils/Utils";
 
 let authModLogic: AuthModLogic = null;
 
 export class AuthorativeModule {
-    constructor() {
+
+    constructor(payload: object) {
         const mod_container = document.getElementById("modules-container");
         const row = document.createElement("div");
         row.classList.add("row");
@@ -68,7 +70,7 @@ export class AuthorativeModule {
         col_9.appendChild(module_content);
         row.appendChild(col_9);
         mod_container.appendChild(row);
-        authModLogic = new AuthModLogic(this);
+        authModLogic = new AuthModLogic(this, payload);
         this.dashboardModule();
     }
 
@@ -82,30 +84,10 @@ export class AuthorativeModule {
         element.appendChild(document.createElement("br"));
     }
 
-    selectExistingModule(h2_title: string, btn_title: string, action: ModuleAction) {
-        const module_form = this.getModuleForm();
-        const title = document.createElement("h2");
-        title.textContent = h2_title;
-        module_form.appendChild(title);
-        this.addBreakpoint(module_form);
-        const ul = document.createElement("ul");
-        ul.classList.add("list-group", "w-75", "m-auto");
-        ul.id = "selmodul";
-        const li = document.createElement("li");
-        li.classList.add("list-group-item");
-        li.textContent = "None";
-        ul.appendChild(li);
-        module_form.appendChild(ul);
-        this.addBreakpoint(module_form);
-        const selectmbutton = document.createElement("button");
-        selectmbutton.classList.add("btn", "btn-outline-dark", "w-75");
-        selectmbutton.type = "button";
-        selectmbutton.id = "smsubmitbutton";
-        selectmbutton.textContent = btn_title;
-        module_form.appendChild(selectmbutton);
-        this.addBreakpoint(module_form);
-
-        authModLogic.getModules(action);
+    async selectExistingModule(h2_title: string, btn_title: string, action: ModuleAction, payload: object) {
+        const utils: Utils = new Utils();
+        utils.selectExistingModuleComponent(this.getModuleForm(), h2_title, btn_title);
+        await utils.selectEMCComponentLogic(authModLogic.submitButton, payload, action, authModLogic);
     }
 
     createModule() {
@@ -113,6 +95,7 @@ export class AuthorativeModule {
     }
 
     editModule(module: object) {
+        console.log("here " + module);
         const title: string = "Editing : " + module["name"];
         authModLogic.editModule(this.moduleDataInput(title), module);
     }

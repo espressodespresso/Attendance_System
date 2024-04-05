@@ -1,5 +1,6 @@
 import {generateAttendanceCode} from "../services/AttendanceService";
 import {AttendanceLogic} from "../logic/AttendanceLogic";
+import {Utils} from "../utils/Utils";
 
 export class AttendanceComponent {
     private index_container_form: HTMLElement;
@@ -9,8 +10,8 @@ export class AttendanceComponent {
         this.index_container_form = index_container_form;
     }
 
-    authAttendanceSelectComponent(payload: object) {
-        const h2 = document.createElement("h2");
+    async authAttendanceSelectComponent(payload: object) {
+        /*const h2 = document.createElement("h2");
         h2.textContent = "Select a Module";
         h2.id = "hh2";
         this.index_container_form.appendChild(h2);
@@ -30,7 +31,14 @@ export class AttendanceComponent {
         selectButton.id = "hsubmitbutton";
         selectButton.textContent = "Select Module";
         this.index_container_form.appendChild(selectButton)
-        this.attendanceLogic.displayModules(payload);
+        this.attendanceLogic.displayModules(payload);*/
+
+        const utils: Utils = new Utils();
+        utils.selectExistingModuleComponent(this.index_container_form, "Select a Module", "Select Module");
+        await utils.selectEMCComponentLogic(this.attendanceLogic.submitModuleButton, payload);
+
+        //utils.selectExistingModuleComponent(this.getModuleForm(), h2_title, btn_title);
+        //await utils.selectEMCComponentLogic(authModLogic.submitButton, payload, action, this);
     }
 
     async authAttendanceCodeComponent(module, date: Date) {

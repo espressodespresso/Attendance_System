@@ -6,8 +6,65 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
+    <div id="analytics-container">
+        <div class="row">
+            <div class="col text-start p-0">
+                <div class="bg-dark-subtle">
+                    <h4 class="shift_right m-0">Selected Module: None</h4>
+                </div>
+                <div class="bg-body-secondary">
+                    <button class="btn btn-outline-dark shift_right" type="button" id="deselectbutton">
+                        Deselect
+                    </button>
+                </div>
+            </div>
+            <div class="col text-end p-0">
+                <div class="bg-dark-subtle">
+                    <h4 class="shift_left m-0">Module Controls</h4>
+                </div>
+                <div class="bg-body-secondary">
+                    <button class="btn btn-outline-dark shift_left" type="button" id="tablebutton">
+                        Display Table
+                    </button>
+                    <button class="btn btn-outline-dark shift_left" type="button" id="graphbutton">
+                        Display Graph
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="p-5 justify-content-center" id="analytics-data-container">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">First</th>
+                    <th scope="col">Last</th>
+                    <th scope="col">Handle</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th scope="row">1</th>
+                    <td>Mark</td>
+                    <td>Otto</td>
+                    <td>@mdo</td>
+                </tr>
+                <tr>
+                    <th scope="row">2</th>
+                    <td>Jacob</td>
+                    <td>Thornton</td>
+                    <td>@fat</td>
+                </tr>
+                <tr>
+                    <th scope="row">3</th>
+                    <td colspan="2">Larry the Bird</td>
+                    <td>@twitter</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="spinner" id="spinner"></div>
     <script src="js/index.min.js"></script>
-    <script src="js/analytics.min.js"></script>
 </body>
 </html>

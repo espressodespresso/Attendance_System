@@ -373,49 +373,32 @@ export class MongoService {
             if(attendanceData !== null) {
                 const moduleName = attendanceData["module"];
                 const moduleData = await this.loadModule(moduleName);
-                console.log("1")
                 if((moduleData["enrolled"] as string[]).includes(username)) {
-                    console.log("2")
                     const attended: string[] = attendanceData["attended"];
                     if(!attended.includes(username)) {
-                        console.log("3")
                         attended.push(username);
                         const update = {
                             $set: {
                                 attended: attended
                             },
                         };
-                        console.log("4")
-                        console.log(attended.toString());
                         const query = { active_code: active_code.toString() };
-                        console.log("4.5");
                         // Needed for some reason, assuming it times out after loadmodule?
                         await this.client.connect();
                         const data = await this.attendanceCollection.updateOne(query, update);
-                        console.log("5")
                         if(data.modifiedCount === 1) {
                             const userData = await this.userInfoUsername(username);
-                            console.log("6")
-                            console.log(userData);
                             const attendance: object[] = userData["attended"];
-                            console.log(attendance.length + "ddd");
-                            console.log("7")
                             if(await updateUserAttendance(username, attendance, moduleName, attendanceData["date"])) {
-                                console.log("8")
                                 return this.aaaObjectReturn(true, Logs.UserAttended);
                             }
-                            console.log("err4")
                             return this.aaaObjectReturn(false, Errors.UserUpdateAttendance);
                         }
-
-                        console.log("err3")
                         return this.aaaObjectReturn(false, Errors.AttendanceModification);
                     } else {
-                        console.log("err2")
                         return this.aaaObjectReturn(false, Errors.AttendedPreviously);
                     }
                 } else {
-                    console.log("err1")
                     return this.aaaObjectReturn(false, Errors.NotEnrolled);
                 }
             }
