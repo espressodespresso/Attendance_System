@@ -77,7 +77,8 @@ export class AuthModLogic {
         });
     }
 
-    submitButton(utils: Utils, modules: object[], action?: ModuleAction, component?: AuthorativeModule) {
+    submitButton(utils: Utils, modules: object[], action: ModuleAction, component: AuthorativeModule) {
+        // utils: Utils, modules: object[], action?: ModuleAction, component?: AuthorativeModule
         const submitbuttom = document.getElementById("smsubmitbutton");
         submitbuttom.addEventListener("click", () => {
             console.log("here " + utils.selectedModule);
@@ -87,6 +88,7 @@ export class AuthModLogic {
                 console.log(moduleData);
                 if(moduleData["name"] === utils.selectedModule) {
                     module = moduleData;
+                    console.log("set module " + moduleData["name"]);
                     break;
                 }
             }

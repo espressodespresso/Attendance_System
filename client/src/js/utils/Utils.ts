@@ -46,6 +46,7 @@ export class Utils {
     selectExistingModuleComponent(container: HTMLElement, h2_title: string, btn_title: string) {
         const title = document.createElement("h2");
         title.textContent = h2_title;
+        title.id = "hh2";
         container.appendChild(title);
         this.addBreakpoint(container);
         const ul = document.createElement("ul");
@@ -67,8 +68,7 @@ export class Utils {
     }
 
 
-    async selectEMCComponentLogic(submitButton: (utils: Utils, modules?: object[], action?: ModuleAction, component?: any) => void
-                                  , payload: object, action?: ModuleAction, component?: any): Promise<void> {
+    async selectEMCComponentLogic(payload: object): Promise<object[]> {
         const userInfo = payload["json"]["userinfo"];
         let loadedModules: object[] = await loadModules();
         switch (userInfo["role"]) {
@@ -99,12 +99,7 @@ export class Utils {
             listgroup.appendChild(listgroupitem);
         }
 
-        if(component instanceof AuthModLogic) {
-            console.log("Yip yip");
-            console.log(loadedModules);
-        }
-
-        submitButton(this, loadedModules, action, component);
+        return loadedModules;
     }
 
     private addBreakpoint(element: HTMLElement) {

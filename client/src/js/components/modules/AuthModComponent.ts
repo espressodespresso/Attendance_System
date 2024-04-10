@@ -87,7 +87,8 @@ export class AuthorativeModule {
     async selectExistingModule(h2_title: string, btn_title: string, action: ModuleAction, payload: object) {
         const utils: Utils = new Utils();
         utils.selectExistingModuleComponent(this.getModuleForm(), h2_title, btn_title);
-        await utils.selectEMCComponentLogic(authModLogic.submitButton, payload, action, authModLogic);
+        const loadedModules = await utils.selectEMCComponentLogic(payload);
+        authModLogic.submitButton(utils, loadedModules, action, this);
     }
 
     createModule() {
@@ -95,7 +96,6 @@ export class AuthorativeModule {
     }
 
     editModule(module: object) {
-        console.log("here " + module);
         const title: string = "Editing : " + module["name"];
         authModLogic.editModule(this.moduleDataInput(title), module);
     }

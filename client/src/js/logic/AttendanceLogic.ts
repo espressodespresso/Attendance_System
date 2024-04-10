@@ -4,6 +4,8 @@ import {AttendanceComponent} from "../components/AttendanceComponent";
 import {Role} from "../enums/Role.enum";
 import {Utils} from "../utils/Utils";
 import {ModuleAction} from "../enums/ModuleAction.enum";
+import QRCode from 'qrcode'
+const QrScanner = require('qr-scanner');
 
 export class AttendanceLogic {
     private attendanceComponent: AttendanceComponent = null;
@@ -20,6 +22,12 @@ export class AttendanceLogic {
         const codeh3 = document.getElementById("attendanceCode");
         const code = await generateAttendanceCode(module_name, date);
         codeh3.textContent = code.toString();
+        try {
+            const qrcode = await QRCode.toCanvas(code.toString(), { errorCorrectionLevel: 'H' });
+            this.attendanceComponent.index_container_form.appendChild(qrcode);
+        } catch (e) {
+            console.log(e);
+        }
 
         window.addEventListener('beforeunload', async function (e) {
             e.preventDefault();
@@ -37,70 +45,45 @@ export class AttendanceLogic {
                 const data = await attendActiveAttendance(parseInt(code));
                 console.log(data["json"]);
             }
+        });
+        const scanbutton: HTMLButtonElement = document.getElementById("scanqrcode") as HTMLButtonElement;
+        (async () => {
+            if(!await QrScanner.hasCamera()) {
+                scanbutton.disabled = true;
+            }
+        })();
+        scanbutton.addEventListener('click', async () => {
+            const video = document.createElement("video");
+            video.height = 180;
+            video.width = 320;
+            this.attendanceComponent.index_container_form.appendChild(video);
+            const qrScanner = new QrScanner(
+                video,
+                async (result) => {
+                    await attendActiveAttendance(parseInt(result))
+                    qrScanner.stop();
+                }
+            );
+            await qrScanner.start();
         })
     }
 
-    displayModules(payload: object) {
-        const ul = document.getElementById("hullist") as HTMLUListElement;
-        const userInfo = payload["json"]["userinfo"];
-        let modules = userInfo["module_list"];
-        loadModules().then(result => {
-            switch (userInfo["role"]) {
-                case Role.IT:
-                case Role.AdministrativeFM:
-                    let globalModules: string[] = [];
-                    result.map((module) => {
-                        globalModules.push(module["name"]);
-                    })
-                    modules = globalModules;
-                    break;
-            }
-
-            if(modules.length > 0) {
-                ul.innerHTML = "";
-                for(let i = 0; i < modules.length; i++) {
-                    const moduleName = modules[i];
-                    const listgroupitem = document.createElement("li");
-                    listgroupitem.classList.add("list-group-item");
-                    listgroupitem.textContent = moduleName;
-                    const idName = moduleName.split(" ").join("");
-                    listgroupitem.id = idName;
-                    listgroupitem.addEventListener("click", () => {
-                        this.selectedModule = this.utils.selectListGroupItemString(listgroupitem, this.selectedModule);
-                    })
-                    ul.appendChild(listgroupitem);
-                }
-
-                const submitButton = document.getElementById("hsubmitbutton");
-                submitButton.addEventListener("click", async () => {
-                    if(this.selectedModule !== null) {
-                        await this.selectDate(this.selectedModule);
-                    } else {
-                        console.error("No module selected");
-                    }
-                })
-            }
-        }).catch((e) => {
-            console.error("Contact System Administrator \n" + e);
-        });
-    }
-
-    submitModuleButton(utils: Utils, modules?: object[], action?: ModuleAction, component?: AttendanceLogic) {
+    submitModuleButton(utils: Utils) {
         const submitButton = document.getElementById("smsubmitbutton");
         submitButton.addEventListener("click", async () => {
-            if(component.selectedModule !== null) {
-                await component.selectDate(component.selectedModule);
+            if(utils.selectedModule !== null) {
+                await this.selectDate(utils.selectedModule);
             } else {
                 console.error("No module selected");
             }
-        })
+        });
     };
 
     async selectDate(moduleName: string) {
         const data = await loadModule(moduleName);
         const h2 = document.getElementById("hh2");
         h2.textContent = moduleName + " : Select a Date";
-        const ul = document.getElementById("hullist") as HTMLUListElement;
+        const ul = document.getElementById("selmodul") as HTMLUListElement;
         const timetable: [] = data["timetable"];
         ul.innerHTML = "";
 
@@ -125,7 +108,7 @@ export class AttendanceLogic {
             ul.appendChild(listgroupitem);
         }
 
-        const submitButton = document.getElementById("hsubmitbutton");
+        const submitButton = document.getElementById("smsubmitbutton");
         submitButton.textContent = "Select Date";
         submitButton.addEventListener("click", async () => {
             if(this.selectedDate !== null) {

@@ -3,7 +3,7 @@ import {AttendanceLogic} from "../logic/AttendanceLogic";
 import {Utils} from "../utils/Utils";
 
 export class AttendanceComponent {
-    private index_container_form: HTMLElement;
+    index_container_form: HTMLElement;
     private attendanceLogic: AttendanceLogic = null;
     constructor(index_container_form: HTMLElement) {
         this.attendanceLogic = new AttendanceLogic(this);
@@ -35,8 +35,8 @@ export class AttendanceComponent {
 
         const utils: Utils = new Utils();
         utils.selectExistingModuleComponent(this.index_container_form, "Select a Module", "Select Module");
-        await utils.selectEMCComponentLogic(this.attendanceLogic.submitModuleButton, payload);
-
+        await utils.selectEMCComponentLogic(payload);
+        this.attendanceLogic.submitModuleButton(utils);
         //utils.selectExistingModuleComponent(this.getModuleForm(), h2_title, btn_title);
         //await utils.selectEMCComponentLogic(authModLogic.submitButton, payload, action, this);
     }
@@ -78,6 +78,13 @@ export class AttendanceComponent {
         button.id = "uasubmit";
         button.textContent = "Submit";
         this.index_container_form.appendChild(button);
+        this.addBreakpoint(this.index_container_form);
+        const scanbutton = document.createElement("button");
+        scanbutton.type = "button";
+        scanbutton.classList.add("btn", "btn-outline-dark", "w-25");
+        scanbutton.id = "scanqrcode";
+        scanbutton.textContent = "Scan QR Code";
+        this.index_container_form.appendChild(scanbutton);
         this.attendanceLogic.attendanceUserCodeComponent();
     }
 
