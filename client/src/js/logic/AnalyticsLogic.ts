@@ -1,12 +1,16 @@
 import {Utils} from "../utils/Utils";
 import {loadModule} from "../services/ModuleService";
 import {AnalyticsComponent} from "../components/AnalyticsComponent";
+import Chart, {ChartData} from "chart.js/auto"
 
 export class AnalyticsLogic {
     private _utils: Utils = null;
     private _selectedModule: object = null;
     private _payload: object = null;
     private _component: AnalyticsComponent = null;
+
+    private _mtimetable: Date[] = null;
+    private _uattendedObj: object = null;
 
     constructor(utils: Utils, payload: object, component: AnalyticsComponent) {
         this._utils = utils;
@@ -18,6 +22,8 @@ export class AnalyticsLogic {
             await this._component.selectModule(payload);
             const selmodh4 = document.getElementById("selmodh4");
             selmodh4.textContent = "Selected Module: None";
+            (document.getElementById("tablebutton") as HTMLButtonElement).disabled = true;
+            (document.getElementById("graphbutton") as HTMLButtonElement).disabled = true;
         });
         const disTable = document.getElementById("tablebutton");
         disTable.addEventListener('click', () => {
@@ -25,8 +31,22 @@ export class AnalyticsLogic {
         });
         const disGraph = document.getElementById("graphbutton");
         disGraph.addEventListener('click', async () => {
-
+            component.displayGraph();
         });
+    }
+
+    private getUserInfo(): object {
+        return this._payload["json"]["userinfo"];
+    }
+
+    private getAttObjfromArray(objArray: object[], name: string):object {
+        objArray.map(obj => {
+           if(obj["module"] === name) {
+               return obj;
+           }
+        });
+
+        return null;
     }
 
     async submitButton() {
@@ -35,23 +55,17 @@ export class AnalyticsLogic {
            const selmodh4 = document.getElementById("selmodh4");
            selmodh4.textContent = "Selected Module: " + this._utils.selectedModule;
            this._selectedModule = await loadModule(this._utils.selectedModule);
+           this._mtimetable = this._selectedModule["timetable"];
+           this._uattendedObj = this.getAttObjfromArray(this.getUserInfo()["attended"], this._selectedModule["name"]);
            document.getElementById("analytics-data-container").innerHTML = "";
+           (document.getElementById("tablebutton") as HTMLButtonElement).disabled = false;
+           (document.getElementById("graphbutton") as HTMLButtonElement).disabled = false;
         });
     }
 
     displayTable() {
         const tbody = document.getElementById("tablebody");
-        const userInfo: object = this._payload["json"]["userinfo"];
-        const timetable: Date[] = this._selectedModule["timetable"];
-        const attendedObjArr: object[] = userInfo["attended"];
-        let attendedObj: object = null;
-        attendedObjArr.map(obj => {
-            if(obj["module"] === this._selectedModule["name"]) {
-                attendedObj = obj;
-            }
-        });
-
-        timetable.map((time, i) => {
+        this._mtimetable.map((time, i) => {
             const tr = document.createElement("tr");
             const th = document.createElement("th");
             th.scope = "row";
@@ -69,11 +83,11 @@ export class AnalyticsLogic {
             tr.appendChild(date);
             const attended = document.createElement("td");
             const late = document.createElement("td");
-            if(attendedObj === null) {
+            if(this._uattendedObj === null) {
                 attended.innerHTML = "X";
                 late.innerHTML = "?";
             } else {
-                const usrAttendedDates: Date[] = attendedObj["attended"];
+                const usrAttendedDates: Date[] = this._uattendedObj["attended"];
                 let located: Date = null;
                 usrAttendedDates.map((usrTime, i) => {
                     if(usrTime === time) {
@@ -95,6 +109,118 @@ export class AnalyticsLogic {
     }
 
     displayGraph() {
+        //this.initAttendanceRateGraph();
+    }
 
+    private initUserAttendanceRateGraph() {
+        const container = this._component.container;
+        const userAttendanceRateChart = document.createElement("canvas");
+        userAttendanceRateChart.id = "userAttendanceRateChart";
+        /*new Chart(userAttendanceRateChart, {
+            type: "bar",
+            data: this.userAttendanceRateData(),
+            options: {
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100
+                    }
+                }
+            }
+        });
+        container.appendChild(userAttendanceRateChart);*/
+    }
+
+    /*private userAttendanceRateData(): ChartData {
+        let labels: string[] = [];
+
+        return {
+
+        }
+    }*/
+
+    private initAttendanceRateGraph() {
+        const container = this._component.container;
+        const attendanceRateChart = document.createElement("canvas");
+        attendanceRateChart.id = "attendanceRateChart";
+        new Chart(attendanceRateChart, {
+            type: "line",
+            data: this.attendanceRateData(),
+            options: {
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100
+                    }
+                }
+            }
+        });
+        container.appendChild(attendanceRateChart);
+    }
+
+    private attendanceRateData(): ChartData  {
+        const dateDataPoints: Date[] = [];
+        let labels: string[] = [];
+        this._mtimetable.map((date, i) => {
+            const timetabledDate = new Date(date);
+            if(i === 0) {
+                labels.push(new Date(timetabledDate.getTime() - (7 * 24 * 60 * 60 * 1000)).toDateString())
+            }
+            labels.push(timetabledDate.toDateString());
+            if(timetabledDate <= new Date()) {
+                dateDataPoints.push(timetabledDate);
+            }
+        });
+
+        let data: number[] = [];
+        data.push(100);
+        const percentageChangeRate: number = 100 / this._mtimetable.length;
+        if(this._uattendedObj === null) {
+            console.log("No user attendance data found");
+            console.log("Percentage Change Rate = " + percentageChangeRate);
+            let attendanceRate: number = 100;
+            for(let i = 0; i < this._mtimetable.length; i++) {
+                if(i+1 <= dateDataPoints.length) {
+                    data.push(Math.round(attendanceRate - percentageChangeRate));
+                    attendanceRate = attendanceRate - percentageChangeRate;
+                } else {
+                    data.push(null);
+                }
+            }
+
+            //const attendanceRate: number = percentageChangeRate * (mtimetable.length - dateDataPoints.length);
+        } else {
+            console.log("User attendance data found");
+            let attendanceRate: number = 100;
+            const attendedArray: Date[] = this._uattendedObj["attended"];
+            for(let i = 0; i < this._mtimetable.length; i++) {
+                if(i+1 <= dateDataPoints.length) {
+                    let attended: boolean = false;
+                    attendedArray.map(date => {
+                       if(dateDataPoints[i].toDateString() === new Date(date).toDateString()) {
+                           attended = true;
+                       }
+                    });
+
+                    if(attended) {
+                        data.push(attendanceRate);
+                    } else {
+                        data.push(attendanceRate = Math.round(attendanceRate - percentageChangeRate));
+                        attendanceRate = attendanceRate - percentageChangeRate;
+                    }
+
+                } else {
+                    data.push(null);
+                }
+            }
+        }
+
+        return {
+            datasets: [{
+                label: this._selectedModule["name"] + " Attendance Rate",
+                data: data,
+            }],
+            labels: labels
+        };
     }
 }

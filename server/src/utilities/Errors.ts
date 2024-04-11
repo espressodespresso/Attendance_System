@@ -27,5 +27,7 @@ export const Errors = {
     NotEnrolled: "User is not enrolled in this module",
     NoAttendanceCode: "The attendance code provided does not exist",
     UserUpdateAttendance: "Unable to update user attendance array",
-    LocateAttendance: "Unable to locate attendance details specified"
+    LocateAttendance: "Unable to locate attendance details specified",
+    // AuthService
+    NotAuthorised: "User is not authorised in this route",
 }

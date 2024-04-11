@@ -19,5 +19,7 @@ export const Logs = {
     // AttendanceRoute
     CodeGenerated: "Code generated for module",
     CodeTerminated: "Code terminated for module",
-    UserAttended: "User successfully attended"
+    UserAttended: "User successfully attended",
+    // AuthService
+    Authorised: "Authorised successfully",
 }

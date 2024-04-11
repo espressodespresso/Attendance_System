@@ -1,10 +1,12 @@
 import {Role} from "../enums/Role.enum";
-const { MongoClient } = require("mongodb")
 import {decode, verify} from 'hono/jwt'
-import {AuthState} from "../enums/AuthState.enum";
 import {Logs} from "../utilities/Logs";
 import {Errors} from "../utilities/Errors";
 import {generateCode, updateUserAttendance} from "./AttendanceService";
+import {Collection} from "../enums/Collection.enum";
+import {AuthState} from "../enums/AuthState.enum";
+
+const { MongoClient } = require("mongodb")
 
 export class MongoService {
     //private client = new MongoClient(process.env["MONGOURI "]);
@@ -15,34 +17,106 @@ export class MongoService {
     private moduleCollection = this.database.collection('module');
     private attendanceCollection = this.database.collection('attendance');
 
-    async login(username: string, password: string) {
+    async findOne(query: object, collection: Collection) {
+        const result = await this.getCollection(collection).findOne(query);
+        if(result === null) {
+            return this.objResponse(false, null);
+        }
+
+        return this.objResponse(true, result);
+    }
+
+    async insertOne(data: object, collection: Collection) {
+        const result = await this.getCollection(collection).insertOne(data);
+        if(!result.acknowledged) {
+            return this.objResponse(false, null);
+        }
+
+        return this.objResponse(true, result);
+    }
+
+    async deleteOne(query: object, collection: Collection) {
+        const result = await this.getCollection(collection).deleteOne(query);
+        if(result.deletedCount !== 1) {
+            return this.objResponse(false, null);
+        }
+
+        return this.objResponse(true, result);
+    }
+
+    async updateOne(query: object, collection: Collection) {
+        const result = await this.getCollection(collection).updateOne(query);
+        if(result.modifiedCount !== 1) {
+            return this.objResponse(false, null);
+        }
+
+        return this.objResponse(true, result);
+    }
+
+    async replaceOne(query: object, collection: Collection) {
+        const result = await this.getCollection(collection).replaceOne(query);
+        if(!result.acknowledged) {
+            return this.objResponse(false, null);
+        }
+
+        return this.objResponse(true, result);
+    }
+
+    private objResponse(status: boolean, result: any): object {
+        return {
+            status: status,
+            result: result
+        }
+    }
+
+    private getCollection(collection: Collection) {
+        switch (collection) {
+            case Collection.users:
+                return this.usersCollection;
+            case Collection.token:
+                return this.tokenCollection;
+            case Collection.module:
+                return this.moduleCollection;
+            case Collection.attendance:
+                return this.attendanceCollection;
+        }
+    }
+
+    private async handleConnection(innerFunc: (...args: any[]) => any) {
         try {
             await this.client.connect();
-            const query = { username: username };
-            const account = await this.usersCollection.findOne(query);
-            let data = {
-                authstate: undefined,
-                account: undefined
-            };
-            if(account !== null) {
-                if(account["password"] === password) {
-                    console.log(Logs.Login);
-                    delete account["password"]
-                    data.authstate = AuthState.Located;
-                    data.account = account;
-                    return data;
-                } else {
-                    console.error(Errors.InvalidPassword);
-                    data.authstate = AuthState.InvalidPass;
-                    return data;
-                }
-            } else {
-                console.error(Errors.InvalidAccount)
-                data.authstate = AuthState.NotLocated;
-                return data;
-            }
+            innerFunc();
+        } catch (e) {
+            console.log(e);
         } finally {
             await this.client.close();
+        }
+    }
+
+    async login(username: string, password: string) {
+        const query = { username: username };
+        const data = await this.findOne(query, Collection.users);
+        let obj = {
+            authstate: undefined,
+            account: undefined
+        };
+        if(data["status"]) {
+            let account = data["result"];
+            if(account["password"] === password) {
+                console.log(Logs.Login);
+                delete account["password"]
+                obj.authstate = AuthState.Located;
+                obj.account = account;
+                return obj;
+            } else {
+                console.error(Errors.InvalidPassword);
+                obj.authstate = AuthState.InvalidPass;
+                return obj;
+            }
+        } else {
+            console.error(Errors.InvalidAccount)
+            obj.authstate = AuthState.NotLocated;
+            return obj;
         }
     }
 

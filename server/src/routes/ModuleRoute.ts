@@ -3,18 +3,20 @@ import {Hono} from "hono";
 import {Errors} from "../utilities/Errors";
 import {Logs} from "../utilities/Logs";
 import {updateUsersModules} from "../services/ModuleService";
+import {RouteService} from "../services/RouteService";
 
-const mongo = new MongoService();
+const mongoService = new MongoService();
+const routeService = new RouteService();
 export const moduleRoute = new Hono();
 
 moduleRoute.post('/create', async (c) => {
-   try {
-       const body: JSON = JSON.parse(await c.req.text());
+   return await routeService.handleErrors(c, async (): Promise<Response> => {
+       const body: JSON = await routeService.getBody(c);
        const moduleName = body["name"];
        const moduleLeader = body["leader"];
-       if(!await mongo.verifyModuleExists(moduleName)) {
-           if(await mongo.verifyUser(moduleLeader)) {
-               await mongo.createModule(moduleName, body["enrolled"], moduleLeader, body["timetable"]);
+       if(!await mongoService.verifyModuleExists(moduleName)) {
+           if(await mongoService.verifyUser(moduleLeader)) {
+               await mongoService.createModule(moduleName, body["enrolled"], moduleLeader, body["timetable"]);
                let users: string[] = body["enrolled"];
                users.push(moduleLeader);
                if(await updateUsersModules(users, [], moduleName)) {
@@ -33,43 +35,32 @@ moduleRoute.post('/create', async (c) => {
            c.status(400);
            return c.json({message: Errors.ModuleExists});
        }
-   } catch {
-       console.error(Errors.CodeError);
-       c.status(500);
-       return c.text(Errors.APIError);
-   }
+
+   })
 });
 
 moduleRoute.get('/list', async (c) => {
-   try {
-       return c.json(await mongo.loadModules());
-   } catch {
-       console.error(Errors.CodeError);
-       c.status(500);
-       return c.text(Errors.APIError);
-   }
+    return await routeService.handleErrors(c, async (): Promise<Response> => {
+        return c.json(await mongoService.loadModules());
+    });
 });
 
-moduleRoute.get(':name', async (c) => {
-   try {
-       const data = await mongo.loadModule(c.req.param('name'));
-       if(data != null) {
+moduleRoute.get('/:name', async (c) => {
+   return await routeService.handleErrors(c, async (): Promise<Response> => {
+       const data = await mongoService.loadModule(routeService.getParam(c, 'name'));
+       if(data !== null) {
            return c.json(data);
        }
-   }  catch {
-       console.error(Errors.CodeError);
-       c.status(500);
-       return c.text(Errors.APIError);
-   }
+   });
 });
 
 moduleRoute.post('/update', async (c) => {
-    try {
-        const body: JSON = JSON.parse(await c.req.text());
+    return await routeService.handleErrors(c, async (): Promise<Response> => {
+       const body: JSON = await routeService.getBody(c);
         const module_name = body["name"];
-        const previousModule = await mongo.loadModule(module_name);
         let updatedModule = body["data"];
-        await mongo.updateModule(module_name, updatedModule);
+        const previousModule = await mongoService.loadModule(module_name);
+        await mongoService.updateModule(module_name, updatedModule);
 
         let updatedUsers: string[] = body["data"]["enrolled"];
         updatedUsers.push(updatedModule["leader"]);
@@ -99,26 +90,18 @@ moduleRoute.post('/update', async (c) => {
             console.error("Unsuccessfully updated all");
         }
         return c.text(Logs.ModuleCreation);
-    } catch {
-        console.error(Errors.CodeError);
-        c.status(500);
-        return c.text(Errors.APIError);
-    }
+    });
 });
 
 
 
-moduleRoute.delete('delete/:name', async (c) => {
-    try {
-        if(await mongo.deleteModule(c.req.param('name'))) {
-            return c.text(Logs.ModuleDelete);
-        } else {
-            c.status(400);
-            return c.text(Errors.NoModuleExists);
-        }
-    } catch {
-        console.error(Errors.CodeError);
-        c.status(500);
-        return c.text(Errors.APIError);
-    }
+moduleRoute.delete('/delete/:name', async (c) => {
+    return await routeService.handleErrors(c, async (): Promise<Response> => {
+       if(await mongoService.deleteModule(routeService.getParam(c, 'name'))) {
+           return c.text(Logs.ModuleDelete);
+       }  else {
+           c.status(400);
+           return c.text(Errors.NoModuleExists);
+       }
+    });
 })

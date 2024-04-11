@@ -47,7 +47,11 @@ export class AnalyticsComponent {
         this._analyticsLogic.displayTable();
     }
 
-    async displayGraph() {
+    displayGraph() {
+        const container = this.getContainer();
+        const attendanceRateChart = document.createElement("canvas");
+        attendanceRateChart.id = "attendanceRateChart";
+        container.appendChild(attendanceRateChart);
         this._analyticsLogic.displayGraph();
     }
 
@@ -55,6 +59,10 @@ export class AnalyticsComponent {
         const container = document.getElementById("analytics-data-container");
         container.innerHTML = "";
         return container;
+    }
+
+    get container(): HTMLElement {
+        return document.getElementById("analytics-data-container");
     }
 
     private thcol(name: string): HTMLTableCellElement {
