@@ -6,7 +6,7 @@ import {Role} from "../enums/Role.enum";
 import {Utils} from "../utils/Utils";
 
 export class AuthModLogic {
-    private authModule: AuthorativeModule = null;
+    private _authModule: AuthorativeModule = null;
 
     constructor(component: AuthorativeModule, payload: object) {
         const creatembutton = document.getElementById("creatembutton") as HTMLInputElement;
@@ -22,7 +22,7 @@ export class AuthModLogic {
             await component.selectExistingModule("Delete an existing module", "Select Module", ModuleAction.Delete, payload);
         });
 
-        this.authModule = component;
+        this._authModule = component;
     }
 
     private async enrollUsers(users: string[]) {
@@ -72,7 +72,7 @@ export class AuthModLogic {
                 timetable: fp.selectedDates
             };
             if(await createModule(module)) {
-                this.authModule.dashboardModule();
+                this._authModule.dashboardModule();
             }
         });
     }
@@ -150,7 +150,7 @@ export class AuthModLogic {
                 try{
                     await updateModule(module["name"], module);
                 } finally {
-                    this.authModule.dashboardModule();
+                    this._authModule.dashboardModule();
                 }
             } else {
                 console.error("Leader username entered does not exist")
@@ -175,7 +175,7 @@ export class AuthModLogic {
         const deleteButton = document.getElementById("dbutton");
         deleteButton.addEventListener("click", async () => {
             if(await deleteModule(module["name"])) {
-                this.authModule.dashboardModule();
+                this._authModule.dashboardModule();
             }
         });
     }
@@ -183,7 +183,7 @@ export class AuthModLogic {
     dashboardModule() {
         const dashboardmbutton = document.getElementById("dashboardmbutton");
         dashboardmbutton.addEventListener("click", () => {
-            this.authModule.dashboardModule();
+            this._authModule.dashboardModule();
         })
     }
 }

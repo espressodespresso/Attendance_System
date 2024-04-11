@@ -8,14 +8,13 @@ import QRCode from 'qrcode'
 const QrScanner = require('qr-scanner');
 
 export class AttendanceLogic {
-    private attendanceComponent: AttendanceComponent = null;
-    selectedModule: string = null;
-    private selectedDate: Date = null;
-    private utils: Utils = null;
+    private _attendanceComponent: AttendanceComponent = null;
+    private _selectedDate: Date = null;
+    private _utils: Utils = null;
 
     constructor(component: AttendanceComponent) {
-        this.attendanceComponent = component;
-        this.utils = new Utils();
+        this._attendanceComponent = component;
+        this._utils = new Utils();
     }
 
     async attendanceAuthCodeComponent(module_name: string, date: Date) {
@@ -24,7 +23,7 @@ export class AttendanceLogic {
         codeh3.textContent = code.toString();
         try {
             const qrcode = await QRCode.toCanvas(code.toString(), { errorCorrectionLevel: 'H' });
-            this.attendanceComponent.index_container_form.appendChild(qrcode);
+            this._attendanceComponent.index_container_form.appendChild(qrcode);
         } catch (e) {
             console.log(e);
         }
@@ -56,7 +55,7 @@ export class AttendanceLogic {
             const video = document.createElement("video");
             video.height = 180;
             video.width = 320;
-            this.attendanceComponent.index_container_form.appendChild(video);
+            this._attendanceComponent.index_container_form.appendChild(video);
             const qrScanner = new QrScanner(
                 video,
                 async (result) => {
@@ -95,9 +94,7 @@ export class AttendanceLogic {
                 listgroupitem.textContent = date.toString();
                 listgroupitem.id = date.toString().split(" ").join("");
                 listgroupitem.addEventListener("click", async () => {
-                    //this.selectedDate = selectListGroupItem(listgroupitem, this.selectedDate)
-                    //this.selectedDate = new Date(timetable[i])
-                    this.selectedDate = this.utils.selectListGroupItemDate(listgroupitem, this.selectedDate);
+                    this._selectedDate = this._utils.selectListGroupItemDate(listgroupitem, this._selectedDate);
                 });
                 ul.appendChild(listgroupitem);
             }
@@ -111,11 +108,8 @@ export class AttendanceLogic {
         const submitButton = document.getElementById("smsubmitbutton");
         submitButton.textContent = "Select Date";
         submitButton.addEventListener("click", async () => {
-            if(this.selectedDate !== null) {
-                //console.log(this.selectedDate);
-                //const test = flatpickr.formatDate(this.selectedDate, "d/m/Y");
-                //console.log(test);
-                await this.attendanceComponent.authAttendanceCodeComponent(moduleName, this.selectedDate);
+            if(this._selectedDate !== null) {
+                await this._attendanceComponent.authAttendanceCodeComponent(moduleName, this._selectedDate);
             } else {
                 console.error("No date selected");
             }

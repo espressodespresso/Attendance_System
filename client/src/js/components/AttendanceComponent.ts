@@ -3,42 +3,22 @@ import {AttendanceLogic} from "../logic/AttendanceLogic";
 import {Utils} from "../utils/Utils";
 
 export class AttendanceComponent {
-    index_container_form: HTMLElement;
-    private attendanceLogic: AttendanceLogic = null;
+    private _index_container_form: HTMLElement;
+    private _attendanceLogic: AttendanceLogic = null;
     constructor(index_container_form: HTMLElement) {
-        this.attendanceLogic = new AttendanceLogic(this);
-        this.index_container_form = index_container_form;
+        this._attendanceLogic = new AttendanceLogic(this);
+        this._index_container_form = index_container_form;
+    }
+
+    get index_container_form() {
+        return this._index_container_form;
     }
 
     async authAttendanceSelectComponent(payload: object) {
-        /*const h2 = document.createElement("h2");
-        h2.textContent = "Select a Module";
-        h2.id = "hh2";
-        this.index_container_form.appendChild(h2);
-        this.addBreakpoint(this.index_container_form);
-        const ul = document.createElement("ul");
-        ul.id = "hullist"
-        ul.classList.add("list-group", "w-75", "m-auto");
-        const li = document.createElement("li");
-        li.classList.add("list-group-item");
-        li.textContent = "None";
-        ul.appendChild(li);
-        this.index_container_form.appendChild(ul);
-        this.addBreakpoint(this.index_container_form);
-        const selectButton = document.createElement("button");
-        selectButton.classList.add("btn", "btn-outline-dark", "w-75");
-        selectButton.type = "button";
-        selectButton.id = "hsubmitbutton";
-        selectButton.textContent = "Select Module";
-        this.index_container_form.appendChild(selectButton)
-        this.attendanceLogic.displayModules(payload);*/
-
         const utils: Utils = new Utils();
         utils.selectExistingModuleComponent(this.index_container_form, "Select a Module", "Select Module");
         await utils.selectEMCComponentLogic(payload);
-        this.attendanceLogic.submitModuleButton(utils);
-        //utils.selectExistingModuleComponent(this.getModuleForm(), h2_title, btn_title);
-        //await utils.selectEMCComponentLogic(authModLogic.submitButton, payload, action, this);
+        this._attendanceLogic.submitModuleButton(utils);
     }
 
     async authAttendanceCodeComponent(module, date: Date) {
@@ -54,7 +34,7 @@ export class AttendanceComponent {
         const code = document.createElement("h3");
         code.id = "attendanceCode";
         this.index_container_form.appendChild(code);
-        await this.attendanceLogic.attendanceAuthCodeComponent(module, date);
+        await this._attendanceLogic.attendanceAuthCodeComponent(module, date);
     }
 
     userAttendanceComponent() {
@@ -85,7 +65,7 @@ export class AttendanceComponent {
         scanbutton.id = "scanqrcode";
         scanbutton.textContent = "Scan QR Code";
         this.index_container_form.appendChild(scanbutton);
-        this.attendanceLogic.attendanceUserCodeComponent();
+        this._attendanceLogic.attendanceUserCodeComponent();
     }
 
     private addBreakpoint(element: HTMLElement) {

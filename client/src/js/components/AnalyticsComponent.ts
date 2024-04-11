@@ -2,14 +2,14 @@ import {Utils} from "../utils/Utils";
 import {AnalyticsLogic} from "../logic/AnalyticsLogic";
 
 export class AnalyticsComponent {
-    private utils: Utils = null;
-    private analyticsLogic: AnalyticsLogic = null;
-    private payload: object = null;
+    private _utils: Utils = null;
+    private _analyticsLogic: AnalyticsLogic = null;
+    private _payload: object = null;
 
     constructor(payload: object) {
-        this.utils = new Utils();
-        this.analyticsLogic = new AnalyticsLogic(this.utils, payload, this);
-        this.payload = payload;
+        this._utils = new Utils();
+        this._analyticsLogic = new AnalyticsLogic(this._utils, payload, this);
+        this._payload = payload;
         (async () => {
             await this.selectModule(payload);
         })().catch(e => {
@@ -17,15 +17,14 @@ export class AnalyticsComponent {
         });
     }
 
-
     async selectModule(payload: object) {
         const container = this.getContainer();
         const selectContainer = document.createElement("div");
         selectContainer.classList.add("text-center");
         container.appendChild(selectContainer);
-        this.utils.selectExistingModuleComponent(selectContainer, "Select a Module", "Select Module");
-        const loadedModules = await this.utils.selectEMCComponentLogic(payload);
-        await this.analyticsLogic.submitButton();
+        this._utils.selectExistingModuleComponent(selectContainer, "Select a Module", "Select Module");
+        const loadedModules = await this._utils.selectEMCComponentLogic(payload);
+        await this._analyticsLogic.submitButton();
     }
 
     displayTable() {
@@ -45,11 +44,11 @@ export class AnalyticsComponent {
         tbody.id = "tablebody";
         table.appendChild(tbody);
         container.appendChild(table);
-        this.analyticsLogic.displayTable();
+        this._analyticsLogic.displayTable();
     }
 
     async displayGraph() {
-        this.analyticsLogic.displayGraph();
+        this._analyticsLogic.displayGraph();
     }
 
     private getContainer(): HTMLElement {

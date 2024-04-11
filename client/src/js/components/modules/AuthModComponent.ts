@@ -4,9 +4,9 @@ import {ModuleAction} from "../../enums/ModuleAction.enum";
 import * as timers from "timers";
 import {Utils} from "../../utils/Utils";
 
-let authModLogic: AuthModLogic = null;
-
 export class AuthorativeModule {
+
+    private _authModLogic: AuthModLogic = null;
 
     constructor(payload: object) {
         const mod_container = document.getElementById("modules-container");
@@ -70,7 +70,7 @@ export class AuthorativeModule {
         col_9.appendChild(module_content);
         row.appendChild(col_9);
         mod_container.appendChild(row);
-        authModLogic = new AuthModLogic(this, payload);
+        this._authModLogic = new AuthModLogic(this, payload);
         this.dashboardModule();
     }
 
@@ -88,16 +88,16 @@ export class AuthorativeModule {
         const utils: Utils = new Utils();
         utils.selectExistingModuleComponent(this.getModuleForm(), h2_title, btn_title);
         const loadedModules = await utils.selectEMCComponentLogic(payload);
-        authModLogic.submitButton(utils, loadedModules, action, this);
+        this._authModLogic.submitButton(utils, loadedModules, action, this);
     }
 
     createModule() {
-        authModLogic.createModule(this.moduleDataInput("Create a new module"));
+        this._authModLogic.createModule(this.moduleDataInput("Create a new module"));
     }
 
     editModule(module: object) {
         const title: string = "Editing : " + module["name"];
-        authModLogic.editModule(this.moduleDataInput(title), module);
+        this._authModLogic.editModule(this.moduleDataInput(title), module);
     }
 
     deleteModule(module: object) {
@@ -148,7 +148,7 @@ export class AuthorativeModule {
         deletebutton.id = "dbutton";
         deletebutton.textContent = "Delete Module";
         module_Form.appendChild(deletebutton);
-        authModLogic.deleteModule(fp, module);
+        this._authModLogic.deleteModule(fp, module);
     }
 
     private moduleDataInput(titleName: string) {
@@ -233,6 +233,6 @@ export class AuthorativeModule {
         title.textContent = "Dashboard";
         module_Form.appendChild(title);
 
-        authModLogic.dashboardModule();
+        this._authModLogic.dashboardModule();
     }
 }

@@ -3,19 +3,19 @@ import {loadModule} from "../services/ModuleService";
 import {AnalyticsComponent} from "../components/AnalyticsComponent";
 
 export class AnalyticsLogic {
-    private utils: Utils = null;
-    private selectedModule: object = null;
-    private payload: object = null;
-    private component: AnalyticsComponent = null;
+    private _utils: Utils = null;
+    private _selectedModule: object = null;
+    private _payload: object = null;
+    private _component: AnalyticsComponent = null;
 
     constructor(utils: Utils, payload: object, component: AnalyticsComponent) {
-        this.utils = utils;
-        this.component = component;
-        this.payload = payload;
+        this._utils = utils;
+        this._component = component;
+        this._payload = payload;
         const dselbutton = document.getElementById("deselectbutton");
         dselbutton.addEventListener('click', async () => {
-            this.selectedModule = null;
-            await this.component.selectModule(payload);
+            this._selectedModule = null;
+            await this._component.selectModule(payload);
             const selmodh4 = document.getElementById("selmodh4");
             selmodh4.textContent = "Selected Module: None";
         });
@@ -33,22 +33,20 @@ export class AnalyticsLogic {
         const submitbuttom = document.getElementById("smsubmitbutton");
         submitbuttom.addEventListener('click', async () => {
            const selmodh4 = document.getElementById("selmodh4");
-           selmodh4.textContent = "Selected Module: " + this.utils.selectedModule;
-           this.selectedModule = await loadModule(this.utils.selectedModule);
+           selmodh4.textContent = "Selected Module: " + this._utils.selectedModule;
+           this._selectedModule = await loadModule(this._utils.selectedModule);
            document.getElementById("analytics-data-container").innerHTML = "";
         });
     }
 
     displayTable() {
         const tbody = document.getElementById("tablebody");
-        console.log(this.payload);
-        const userInfo: object = this.payload["json"]["userinfo"];
-        const timetable: Date[] = this.selectedModule["timetable"];
-        console.log("timetable " + this.selectedModule);
+        const userInfo: object = this._payload["json"]["userinfo"];
+        const timetable: Date[] = this._selectedModule["timetable"];
         const attendedObjArr: object[] = userInfo["attended"];
         let attendedObj: object = null;
         attendedObjArr.map(obj => {
-            if(obj["module"] === this.selectedModule["name"]) {
+            if(obj["module"] === this._selectedModule["name"]) {
                 attendedObj = obj;
             }
         });
@@ -61,7 +59,7 @@ export class AnalyticsLogic {
             tr.appendChild(th);
             const name = document.createElement("td");
             if(i === 0) {
-                name.innerHTML = this.selectedModule["name"];
+                name.innerHTML = this._selectedModule["name"];
             } else {
                 name.innerHTML = "-";
             }

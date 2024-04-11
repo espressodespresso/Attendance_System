@@ -7,7 +7,11 @@ import {AttendanceComponent} from "../components/AttendanceComponent";
 import {AttendanceLogic} from "../logic/AttendanceLogic";
 
 export class Utils {
-    selectedModule: string = null;
+    private _selectedModule: string = null;
+
+    get selectedModule() {
+        return this._selectedModule;
+    }
 
     selectListGroupItemString(htmlElement: HTMLElement, comparativeVariable: string): string {
         if(comparativeVariable === null) {
@@ -94,7 +98,7 @@ export class Utils {
             const idName = moduleName.split(" ").join("");
             listgroupitem.id = idName;
             listgroupitem.addEventListener("click", () => {
-                this.selectedModule = this.selectListGroupItemString(listgroupitem, this.selectedModule);
+                this._selectedModule = this.selectListGroupItemString(listgroupitem, this._selectedModule);
             });
             listgroup.appendChild(listgroupitem);
         }
