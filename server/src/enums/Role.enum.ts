@@ -2,5 +2,8 @@ export enum Role{
     Student,
     Lecturer,
     AdministrativeFM,
-    IT
+    IT,
+    // Auth Service Specific
+    All,
+    Exclude
 }

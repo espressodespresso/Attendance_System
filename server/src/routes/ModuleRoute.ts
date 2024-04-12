@@ -4,13 +4,15 @@ import {Errors} from "../utilities/Errors";
 import {Logs} from "../utilities/Logs";
 import {updateUsersModules} from "../services/ModuleService";
 import {RouteService} from "../services/RouteService";
+import {elevatedRoleAuth} from "../services/AuthService";
+import {Role} from "../enums/Role.enum";
 
 const mongoService = new MongoService();
 const routeService = new RouteService();
 export const moduleRoute = new Hono();
 
 moduleRoute.post('/create', async (c) => {
-   return await routeService.handleErrors(c, async (): Promise<Response> => {
+   return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
        const body: JSON = await routeService.getBody(c);
        const moduleName = body["name"];
        const moduleLeader = body["leader"];
@@ -40,13 +42,13 @@ moduleRoute.post('/create', async (c) => {
 });
 
 moduleRoute.get('/list', async (c) => {
-    return await routeService.handleErrors(c, async (): Promise<Response> => {
+    return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
         return c.json(await mongoService.loadModules());
     });
 });
 
 moduleRoute.get('/:name', async (c) => {
-   return await routeService.handleErrors(c, async (): Promise<Response> => {
+   return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
        const data = await mongoService.loadModule(routeService.getParam(c, 'name'));
        if(data !== null) {
            return c.json(data);
@@ -55,7 +57,7 @@ moduleRoute.get('/:name', async (c) => {
 });
 
 moduleRoute.post('/update', async (c) => {
-    return await routeService.handleErrors(c, async (): Promise<Response> => {
+    return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
        const body: JSON = await routeService.getBody(c);
         const module_name = body["name"];
         let updatedModule = body["data"];
@@ -96,7 +98,7 @@ moduleRoute.post('/update', async (c) => {
 
 
 moduleRoute.delete('/delete/:name', async (c) => {
-    return await routeService.handleErrors(c, async (): Promise<Response> => {
+    return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
        if(await mongoService.deleteModule(routeService.getParam(c, 'name'))) {
            return c.text(Logs.ModuleDelete);
        }  else {

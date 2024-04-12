@@ -1,17 +1,40 @@
 import {Errors} from "../utilities/Errors";
 import {sign} from 'hono/jwt'
 import {MongoService} from "./MongoService";
+import {AuthService, RoleAuth} from "./AuthService";
+import {decode} from "hono/dist/types/middleware/jwt";
+import {Role} from "../enums/Role.enum";
 const cookie = require('cookie')
 
+const authService = new AuthService();
+
 export class RouteService {
-    async handleErrors(c: any, innerFunc: (...args: any[]) => any) {
+
+    async handleErrors(c: any, ac: RoleAuth , innerFunc: (...args: any[]) => any) {
         try {
-            return innerFunc();
+            const objResponse = authService.verifyRoleAuth(ac, this.getCookiesArray(c));
+            switch (objResponse["status"]) {
+                case 200:
+                    return innerFunc();
+                case 401:
+                    c.status(401);
+                    break;
+                case 403:
+                    c.status(403);
+                    break;
+            }
+
+            console.error(objResponse["message"]);
+            return c.text(objResponse["message"]);
         } catch (e) {
             console.error(Errors.CodeError + "\n" + e);
             c.status(500);
             return c.text(Errors.APIError);
         }
+    }
+
+    private getCookiesArray(c: any) {
+        return c.req.header('cookie').split(" ");
     }
 
     async getBody(c: any): Promise<JSON> {

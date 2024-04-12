@@ -44,6 +44,15 @@ export class MongoService {
         return this.objResponse(true, result);
     }
 
+    async deleteMany(query: object, collection: Collection) {
+        const result = await this.getCollection(collection).deleteMany(query);
+        if(!result.acknowledged) {
+            return this.objResponse(false, null);
+        }
+
+        return this.objResponse(true, result);
+    }
+
     async updateOne(query: object, collection: Collection) {
         const result = await this.getCollection(collection).updateOne(query);
         if(result.modifiedCount !== 1) {
@@ -82,41 +91,14 @@ export class MongoService {
         }
     }
 
-    private async handleConnection(innerFunc: (...args: any[]) => any) {
+    async handleConnection(innerFunc: (...args: any[]) => any) {
         try {
             await this.client.connect();
-            innerFunc();
+            return innerFunc();
         } catch (e) {
             console.log(e);
         } finally {
             await this.client.close();
-        }
-    }
-
-    async login(username: string, password: string) {
-        const query = { username: username };
-        const data = await this.findOne(query, Collection.users);
-        let obj = {
-            authstate: undefined,
-            account: undefined
-        };
-        if(data["status"]) {
-            let account = data["result"];
-            if(account["password"] === password) {
-                console.log(Logs.Login);
-                delete account["password"]
-                obj.authstate = AuthState.Located;
-                obj.account = account;
-                return obj;
-            } else {
-                console.error(Errors.InvalidPassword);
-                obj.authstate = AuthState.InvalidPass;
-                return obj;
-            }
-        } else {
-            console.error(Errors.InvalidAccount)
-            obj.authstate = AuthState.NotLocated;
-            return obj;
         }
     }
 

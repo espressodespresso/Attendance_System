@@ -5,13 +5,15 @@ import {Errors} from "../utilities/Errors";
 import {Logs} from "../utilities/Logs";
 import {MongoService} from "../services/MongoService";
 import {RouteService} from "../services/RouteService";
+import {elevatedRoleAuth} from "../services/AuthService";
+import {Role} from "../enums/Role.enum";
 
 const mongoService = new MongoService();
 const routeService = new RouteService();
 export const accountRoute = new Hono();
 
 accountRoute.get('/', async (c) => {
-    return await routeService.handleErrors(c, async (): Promise<Response> => {
+    return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
         const token: string = routeService.getAuthToken(c);
         if(token === null) {
             console.error(Errors.NoAuthToken)
@@ -30,7 +32,7 @@ accountRoute.get('/', async (c) => {
 });
 
 accountRoute.post('/auth', async (c) => {
-    return await routeService.handleErrors(c, async (): Promise<Response> => {
+    return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
         const body: JSON = await routeService.getBody(c);
         const refresh_token: string = routeService.getRefreshToken(c);
         if(refresh_token === null) {
@@ -53,7 +55,7 @@ accountRoute.post('/auth', async (c) => {
 })
 
 accountRoute.get('/refresh', async (c) => {
-    return await routeService.handleErrors(c, async (): Promise<Response> => {
+    return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
         let refresh_token: string = routeService.getRefreshToken(c);
         if(refresh_token === null) {
             console.error(Errors.NoRefreshToken);
@@ -71,7 +73,7 @@ accountRoute.get('/refresh', async (c) => {
 });
 
 accountRoute.get('/verify/:username', async (c) => {
-    return await routeService.handleErrors(c, async (): Promise<Response> => {
+    return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
         if(await mongoService.verifyUser(routeService.getParam(c, 'username'))) {
             return c.json({ valid: true })
         }
