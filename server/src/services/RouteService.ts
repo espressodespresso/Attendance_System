@@ -4,6 +4,7 @@ import {MongoService} from "./MongoService";
 import {AuthService, RoleAuth} from "./AuthService";
 import {decode} from "hono/dist/types/middleware/jwt";
 import {Role} from "../enums/Role.enum";
+import {AccountService} from "./AccountService";
 const cookie = require('cookie')
 
 const authService = new AuthService();
@@ -71,7 +72,7 @@ export class RouteService {
 
     async setGenRefreshToken(c: any, fingerprint: string, username: string) {
         const token: string = await this.setGenToken(c, "refresh_token", fingerprint, process.env.SECRET, 1800);
-        await new MongoService().storeRefreshToken(token, username, fingerprint);
+        await new AccountService().storeRefreshToken(token, username, fingerprint);
     }
 
     private async setGenToken(c: any, name: string ,data: any, secret: string, age: number): Promise<string> {

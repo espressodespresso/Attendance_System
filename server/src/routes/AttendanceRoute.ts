@@ -6,14 +6,15 @@ import {decode} from "hono/jwt";
 import {RouteService} from "../services/RouteService";
 import {Role} from "../enums/Role.enum";
 import {elevatedRoleAuth} from "../services/AuthService";
+import {AttendanceService} from "../services/AttendanceService";
 
-const mongoService = new MongoService();
+const attendanceService = new AttendanceService();
 const routeService = new RouteService();
 export const attendanceRoute = new Hono();
 
 attendanceRoute.get('/take/:name/:date', async (c) => {
     return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
-        let active_code: number = await mongoService.generateAttendanceCode(routeService.getParam(c, 'name')
+        let active_code: number = await attendanceService.generateAttendanceCode(routeService.getParam(c, 'name')
             , routeService.getParam(c, 'date'));
         return c.json({active_code: active_code});
     });
@@ -21,7 +22,7 @@ attendanceRoute.get('/take/:name/:date', async (c) => {
 
 attendanceRoute.get('/end/:code', async (c) => {
     return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
-        if(await mongoService.terminateActiveAttendance(routeService.getParam(c, 'code'))) {
+        if(await attendanceService.terminateActiveAttendance(routeService.getParam(c, 'code'))) {
             console.log("Code terminated");
             return c.text(Logs.CodeTerminated);
         }
@@ -41,7 +42,7 @@ attendanceRoute.post('/attend/:code', async (c) => {
         }
 
         const username = decode(token).payload["username"];
-        const response: object = await mongoService.attendActiveAttendance(
+        const response: object = await attendanceService.attendActiveAttendance(
             routeService.getParam(c, 'code'), username);
         if(!response["status"]) {
             c.status(400);
@@ -54,7 +55,7 @@ attendanceRoute.post('/attend/:code', async (c) => {
 
 attendanceRoute.get('/details/:name/:date', async (c) => {
     return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
-        const data: object = await mongoService.locateAttended(
+        const data: object = await attendanceService.locateAttended(
             routeService.getParam(c, 'name'), routeService.getParam(c, 'data'));
         if(data != null) {
             return c.json(JSON.stringify(data));

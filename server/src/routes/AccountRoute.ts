@@ -7,9 +7,11 @@ import {MongoService} from "../services/MongoService";
 import {RouteService} from "../services/RouteService";
 import {elevatedRoleAuth} from "../services/AuthService";
 import {Role} from "../enums/Role.enum";
+import {AccountService} from "../services/AccountService";
 
 const mongoService = new MongoService();
 const routeService = new RouteService();
+const accountService = new AccountService();
 export const accountRoute = new Hono();
 
 accountRoute.get('/', async (c) => {
@@ -21,7 +23,7 @@ accountRoute.get('/', async (c) => {
             return c.text(Errors.NoAuthToken);
         }
 
-        const userInfo = await mongoService.userInfo(token);
+        const userInfo = await accountService.getUserInfobyAuthToken(token);
         if(userInfo !== null) {
             return c.json({ userinfo: userInfo});
         }
@@ -41,9 +43,9 @@ accountRoute.post('/auth', async (c) => {
             return c.text(Errors.NoRefreshToken);
         }
 
-        const verified = await mongoService.verifyRefreshToken(refresh_token, body["fingerprint"]);
+        const verified = await accountService.verifyRefreshToken(refresh_token, body["fingerprint"]);
         if(verified.valid) {
-            const data = await mongoService.getAccountDetailsViaRT(refresh_token);
+            const data = await accountService.getUserInfobyRefreshToken(refresh_token);
             await routeService.setGenAuthToken(c, data);
             console.log(Logs.AccountAuthRoute);
             return c.json({ url: 'http://localhost:8080/account/refresh' })
@@ -63,9 +65,9 @@ accountRoute.get('/refresh', async (c) => {
             return c.text(Errors.NoRefreshToken);
         }
 
-        const data = await mongoService.getAccountDetailsViaRT(refresh_token);
+        const data = await accountService.getUserInfobyRefreshToken(refresh_token);
         const fingerprint = decode(refresh_token).payload;
-        await mongoService.deleteRefreshToken(refresh_token);
+        await accountService.deleteRefreshToken(refresh_token);
         await routeService.setGenRefreshToken(c, fingerprint, data["username"]);
         console.log(Logs.AccountRefreshRoute);
         return c.text(Logs.AccountRefreshRoute);
@@ -74,7 +76,7 @@ accountRoute.get('/refresh', async (c) => {
 
 accountRoute.get('/verify/:username', async (c) => {
     return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
-        if(await mongoService.verifyUser(routeService.getParam(c, 'username'))) {
+        if(await accountService.verifyUser(routeService.getParam(c, 'username'))) {
             return c.json({ valid: true })
         }
 
