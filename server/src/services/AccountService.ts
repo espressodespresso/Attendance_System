@@ -103,7 +103,8 @@ export class AccountService {
         const data = {
             "refresh_token": token,
             "username": username,
-            "fingerprint": fingerprint
+            "fingerprint": fingerprint,
+            "expiry": new Date(new Date().getTime() + 1800000)
         };
 
         const response: object = await this.mongoService.handleConnection

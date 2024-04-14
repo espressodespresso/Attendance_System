@@ -1,8 +1,53 @@
 import {Accept} from "../enums/Accept.enum";
-import js from "../index";
+import {Fetch} from "../enums/Fetch.enum";
+import {Route} from "../enums/Route.enum";
 
 export class RequestService {
-    async FetchPOSTRequest(url: string, body: string, accept: Accept): Promise<object> {
+    private apiAddress: string = "http://localhost:8080/";
+
+    async handleFetch(fetch: Fetch, route: Route, url: string, accept?: Accept, body?: string): Promise<object> {
+        let tempRoute: string = null;
+        switch (route) {
+            case Route.account:
+                tempRoute = "account";
+                break;
+            case Route.analytics:
+                tempRoute = "analytics";
+                break;
+            case Route.attendance:
+                tempRoute = "attendance";
+                break;
+            case Route.login:
+                tempRoute = "login";
+                break;
+            case Route.module:
+                tempRoute = "module";
+                break;
+        }
+        const completedAddress = `${this.apiAddress}${tempRoute}${url}`;
+        try {
+            let data: object = null;
+            switch (fetch) {
+                case Fetch.GET:
+                    data = this.FetchGETRequest(completedAddress, accept);
+                    break;
+                case Fetch.POST:
+                    data = this.FetchPOSTRequest(completedAddress, body, accept);
+                    break;
+                case Fetch.DELETE:
+                    data = {
+                        success: this.FetchDELETERequest(completedAddress)
+                    };
+                    break;
+            }
+
+            return data;
+        } catch (e) {
+            console.error(`No tokens\n${e}`);
+        }
+    }
+
+    private async FetchPOSTRequest(url: string, body: string, accept: Accept): Promise<object> {
         try {
             let response: Response;
             let data: object;
@@ -62,7 +107,7 @@ export class RequestService {
         }
     }
 
-    async FetchGETRequest(url: string, accept: Accept): Promise<object> {
+    private async FetchGETRequest(url: string, accept: Accept): Promise<object> {
         try {
             let response: Response;
             let data: object;

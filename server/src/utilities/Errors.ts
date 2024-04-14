@@ -30,4 +30,7 @@ export const Errors = {
     LocateAttendance: "Unable to locate attendance details specified",
     // AuthService
     NotAuthorised: "User is not authorised in this route",
+    // AnalyticsService
+    ComparativeData: "Unable to locate parameters given for comparative analytics",
+    NoAttendanceData: "No user attendance data found"
 }

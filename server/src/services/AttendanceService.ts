@@ -7,7 +7,7 @@ import {ModuleService} from "./ModuleService";
 
 export class AttendanceService {
     private mongoService: MongoService = null;
-
+    
     constructor() {
         this.mongoService = new MongoService;
     }

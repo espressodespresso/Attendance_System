@@ -2,6 +2,7 @@ import {Utils} from "../utils/Utils";
 import {loadModule} from "../services/ModuleService";
 import {AnalyticsComponent} from "../components/AnalyticsComponent";
 import Chart, {ChartData} from "chart.js/auto"
+import {getUserAttendanceRateData} from "../services/AnalyticsService";
 
 export class AnalyticsLogic {
     private _utils: Utils = null;
@@ -109,7 +110,9 @@ export class AnalyticsLogic {
     }
 
     displayGraph() {
-        //this.initAttendanceRateGraph();
+        (async () => {
+            await this.initAttendanceRateGraph();
+        })()
     }
 
     private initUserAttendanceRateGraph() {
@@ -139,13 +142,15 @@ export class AnalyticsLogic {
         }
     }*/
 
-    private initAttendanceRateGraph() {
+    private async initAttendanceRateGraph() {
         const container = this._component.container;
         const attendanceRateChart = document.createElement("canvas");
         attendanceRateChart.id = "attendanceRateChart";
+        const response: object = await getUserAttendanceRateData(this.getUserInfo()["username"] ,this._selectedModule["name"])
+        console.log(`data: ${response}`)
         new Chart(attendanceRateChart, {
             type: "line",
-            data: this.attendanceRateData(),
+            data: response["data"]["data"],
             options: {
                 scales: {
                     y: {

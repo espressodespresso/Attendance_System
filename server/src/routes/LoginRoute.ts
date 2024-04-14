@@ -1,6 +1,4 @@
 import {Hono} from "hono";
-import {MongoService} from "../services/MongoService";
-import {sign} from 'hono/jwt'
 import {AuthState} from "../enums/AuthState.enum";
 import {Logs} from "../utilities/Logs";
 import {Errors} from "../utilities/Errors";

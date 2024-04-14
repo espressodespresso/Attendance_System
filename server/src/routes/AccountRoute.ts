@@ -1,15 +1,13 @@
 import {Hono} from "hono";
-import {decode, sign} from "hono/jwt";
-import cookie from "cookie";
+import {decode} from "hono/jwt";
 import {Errors} from "../utilities/Errors";
 import {Logs} from "../utilities/Logs";
-import {MongoService} from "../services/MongoService";
 import {RouteService} from "../services/RouteService";
 import {elevatedRoleAuth} from "../services/AuthService";
 import {Role} from "../enums/Role.enum";
 import {AccountService} from "../services/AccountService";
 
-const mongoService = new MongoService();
+
 const routeService = new RouteService();
 const accountService = new AccountService();
 export const accountRoute = new Hono();
@@ -48,7 +46,7 @@ accountRoute.post('/auth', async (c) => {
             const data = await accountService.getUserInfobyRefreshToken(refresh_token);
             await routeService.setGenAuthToken(c, data);
             console.log(Logs.AccountAuthRoute);
-            return c.json({ url: 'http://localhost:8080/account/refresh' })
+            return c.json({ url: '/refresh' })
         } else {
             c.status(403);
             return c.text(Errors.TokenVerification);

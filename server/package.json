@@ -12,6 +12,7 @@
     "@hono/node-server": "^1.7.0",
     "@types/cookie": "^0.6.0",
     "@types/node": "^20.11.17",
+    "chart.js": "^4.4.2",
     "cookie": "^0.6.0",
     "dotenv": "^16.4.2",
     "dotenv-expand": "^11.0.2",

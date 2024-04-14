@@ -22,4 +22,7 @@ export const Logs = {
     UserAttended: "User successfully attended",
     // AuthService
     Authorised: "Authorised successfully",
+    // AnalyticsService
+    AttendanceData: "User attendance data found",
+    ModuleAttendanceData: "Module attendance data found and compiled",
 }
