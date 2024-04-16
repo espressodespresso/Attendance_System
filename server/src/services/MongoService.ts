@@ -67,6 +67,15 @@ export class MongoService {
         return this.objResponse(true, result);
     }
 
+    async updateMany(filter: object, data: object, collection: Collection): Promise<object> {
+        const result = await this.getCollection(collection).updateMany(filter, data);
+        if(!result.acknowledged) {
+            return this.objResponse(false, null);
+        }
+
+        return this.objResponse(true, result);
+    }
+
     async replaceOne(query: object, replacement: object, collection: Collection): Promise<object> {
         const result = await this.getCollection(collection).replaceOne(query, replacement);
         if(!result.acknowledged) {

@@ -140,15 +140,15 @@ export class AuthModLogic {
 
         const submitbuttom = document.getElementById("mnsubmitbutton");
         submitbuttom.addEventListener("click", async () => {
-            let module = {
+            let newModule = {
                 name: nameinput.value,
                 enrolled: users,
                 leader: leaderinput.value,
                 timetable: fp.selectedDates
             };
-            if(await verifyUserExists(module["leader"])) {
+            if(await verifyUserExists(newModule["leader"])) {
                 try{
-                    await updateModule(module["name"], module);
+                    await updateModule(module["name"], newModule);
                 } finally {
                     this._authModule.dashboardModule();
                 }

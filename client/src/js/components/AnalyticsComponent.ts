@@ -21,6 +21,7 @@ export class AnalyticsComponent {
         const container = this.getContainer();
         const selectContainer = document.createElement("div");
         selectContainer.classList.add("text-center");
+        selectContainer.id = "selectContainer";
         container.appendChild(selectContainer);
         this._utils.selectExistingModuleComponent(selectContainer, "Select a Module", "Select Module");
         const loadedModules = await this._utils.selectEMCComponentLogic(payload);
@@ -32,26 +33,27 @@ export class AnalyticsComponent {
         const table = document.createElement("table");
         table.classList.add("table");
         const thead = document.createElement("thead");
-        const tr = document.createElement("tr");
-        tr.appendChild(this.thcol("#"));
-        tr.appendChild(this.thcol("Module Name"));
-        tr.appendChild(this.thcol("Date"));
-        tr.appendChild(this.thcol("Attended"));
-        tr.appendChild(this.thcol("Late"));
-        thead.appendChild(tr);
+        thead.id = "tablehead";
         table.appendChild(thead);
         const tbody = document.createElement("tbody");
         tbody.id = "tablebody";
         table.appendChild(tbody);
         container.appendChild(table);
-        this._analyticsLogic.displayTable();
     }
 
     displayGraph() {
         const container = this.getContainer();
-        const attendanceRateChart = document.createElement("canvas");
-        attendanceRateChart.id = "attendanceRateChart";
-        container.appendChild(attendanceRateChart);
+    }
+
+    addControlbutton(name: string, id: string): HTMLButtonElement {
+        const button = document.createElement("button");
+        button.classList.add("btn", "btn-outline-dark", "shift_left");
+        button.type = "button";
+        button.id = id;
+        button.textContent = name;
+        button.disabled = true;
+        document.getElementById("analytics-button-container").appendChild(button);
+        return button;
     }
 
     private getContainer(): HTMLElement {
@@ -62,12 +64,5 @@ export class AnalyticsComponent {
 
     get container(): HTMLElement {
         return document.getElementById("analytics-data-container");
-    }
-
-    private thcol(name: string): HTMLTableCellElement {
-        const th = document.createElement("th");
-        th.scope = "col";
-        th.innerHTML = name;
-        return th;
     }
 }

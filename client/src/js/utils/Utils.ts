@@ -76,13 +76,17 @@ export class Utils {
         const userInfo = payload["json"]["userinfo"];
         let loadedModules: object[] = await loadModules();
         switch (userInfo["role"]) {
-            case Role.Lecturer:
+            case Role.Student:
                 const module_list: string[] = userInfo["module_list"];
+                console.log(module_list);
+                const tempModules: object[] = [];
                 for(let i = 0; i < module_list.length; i++) {
-                    const tempModules: object[] = [];
+                    console.log(module_list[i])
+                    console.log(await loadModule(module_list[i]));
                     tempModules.push(await loadModule(module_list[i]));
-                    loadedModules = tempModules;
                 }
+                loadedModules = tempModules;
+                break;
         }
 
         const listgroup = document.getElementById("selmodul");

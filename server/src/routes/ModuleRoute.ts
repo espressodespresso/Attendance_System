@@ -21,11 +21,7 @@ moduleRoute.post('/create', async (c) => {
                await moduleService.createModule(moduleName, body["enrolled"], moduleLeader, body["timetable"]);
                let users: string[] = body["enrolled"];
                users.push(moduleLeader);
-               if(await moduleService.updateUsersModules(users, [], moduleName)) {
-                   console.log("Updated all");
-               } else {
-                   console.error("Unsuccessfully updated all");
-               }
+               await moduleService.updateUsersModules(users, [], moduleName)
                return c.json({message: Logs.ModuleCreation});
            } else {
                console.error(Errors.NoModuleLeader);
@@ -87,10 +83,12 @@ moduleRoute.post('/update', async (c) => {
         }
 
         if(await moduleService.updateUsersModules(addModule, removeModule, module_name)) {
-            console.log("Updated all");
-        } else {
-            console.error("Unsuccessfully updated all");
+            const newName: string = updatedModule["name"]
+            if(module_name !== newName) {
+                await moduleService.updateUsersModuleName(module_name, newName);
+            }
         }
+
         return c.text(Logs.ModuleCreation);
     });
 });

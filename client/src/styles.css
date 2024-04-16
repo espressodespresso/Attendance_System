@@ -91,6 +91,23 @@ h3 {
     }
 }
 
+#analytics-data-container {
+    height: calc(100vh - 149.458px);
+    width: 100vw;
+}
+
+#selectContainer {
+    width: 50vw;
+    background-color: rgba(190, 0, 91, 0.13);
+    padding: 1vw;
+    border-radius: 12px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    overflow: hidden;
+}
+
 /* Spinner via https://www.youtube.com/watch?v=q76TexbMXJg Tutorial */
 
 .spinner {

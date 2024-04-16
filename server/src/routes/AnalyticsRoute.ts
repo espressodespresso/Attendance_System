@@ -51,3 +51,32 @@ analyticsRoute.get('/attendance/avg/:module/data', async (c) => {
         return c.json(JSON.stringify(response));
     });
 });
+
+analyticsRoute.get('/table/:user/:module', async (c) => {
+    return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
+        const response: object = await analyticsService.getUserTableData(routeService.getParam(c, 'user')
+            ,routeService.getParam(c, 'module'));
+        if(response === null) {
+            c.status(400);
+            console.error(Errors.CodeError);
+            return c.text(Errors.CodeError);
+        }
+
+        console.log(response["message"]);
+        return c.json(JSON.stringify(response));
+    });
+});
+
+analyticsRoute.get('/table/:module', async (c) => {
+    return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
+        const response: object = await analyticsService.getModuleTableData(routeService.getParam(c, 'module'));
+        if(response === null) {
+            c.status(400);
+            console.error(Errors.CodeError);
+            return c.text(Errors.CodeError);
+        }
+
+        console.log(response["message"]);
+        return c.json(JSON.stringify(response));
+    });
+});

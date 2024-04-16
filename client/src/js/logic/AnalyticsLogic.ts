@@ -5,7 +5,9 @@ import Chart, {ActiveElement, ChartData, ChartEvent} from "chart.js/auto"
 import {
     getModuleAttendanceRateData,
     getModuleAverageAttendanceRateData,
-    getUserAttendanceRateData
+    getModuleTableData,
+    getUserAttendanceRateData,
+    getUserTableData
 } from "../services/AnalyticsService";
 import {Role} from "../enums/Role.enum";
 
@@ -22,24 +24,55 @@ export class AnalyticsLogic {
 
     private _mtimetable: Date[] = null;
     private _uattendedObj: object = null;
+    private _controlButtons: HTMLButtonElement[] = [];
 
     constructor(utils: Utils, payload: object, component: AnalyticsComponent) {
         this._utils = utils;
         this._component = component;
         this._payload = payload;
-        const dselbutton = document.getElementById("deselectbutton");
-        dselbutton.addEventListener('click', async () => {
+        const dselButton = document.getElementById("deselectbutton");
+        dselButton.addEventListener('click', async () => {
             this._selectedModule = null;
             await this._component.selectModule(payload);
             const selmodh4 = document.getElementById("selmodh4");
             selmodh4.textContent = "Selected Module: None";
-            (document.getElementById("tablebutton") as HTMLButtonElement).disabled = true;
-            (document.getElementById("graphbutton") as HTMLButtonElement).disabled = true;
+            for(let i = 0; i < this._controlButtons.length; i++) {
+                this._controlButtons[i].disabled = true;
+            }
         });
-        const disTable = document.getElementById("tablebutton");
-        disTable.addEventListener('click', () => {
-            component.displayTable();
-        });
+
+        const tableButton = component.addControlbutton("Display Table", "tablebutton");
+        this._controlButtons.push(tableButton);
+        switch ((this.getUserInfo()["role"] as Role)) {
+            case Role.Student: {
+                tableButton.addEventListener('click', async () => {
+                    await this.initUserTable();
+                });
+                const attendanceButton = component.addControlbutton("Display Attendance Rate", "graphbutton");
+                attendanceButton.addEventListener('click', async () => {
+                    await this.initAttendanceRateGraph();
+                });
+                this._controlButtons.push(attendanceButton);
+                break;
+            }
+            case Role.IT:
+            case Role.AdministrativeFM:
+            case Role.Lecturer:
+                tableButton.addEventListener('click', async () => {
+                    await this.initModuleTable();
+                });
+                const attendanceButton  = component.addControlbutton("Display Current Attendance Rate", "bargraphbutton");
+                attendanceButton.addEventListener('click', async () => {
+                    await this.initModuleAttendanceRateGraph();
+                });
+                this._controlButtons.push(attendanceButton);
+                const attendanceAvgButton  = component.addControlbutton("Display Average Attendance Rate", "linegraphbutton");
+                attendanceAvgButton.addEventListener('click', async () => {
+                    await this.initModuleAverageAttendanceRateGraph();
+                });
+                this._controlButtons.push(attendanceAvgButton);
+                break;
+        }
     }
 
     private getUserInfo(): object {
@@ -59,69 +92,64 @@ export class AnalyticsLogic {
     async submitButton() {
         const submitbuttom = document.getElementById("smsubmitbutton");
         submitbuttom.addEventListener('click', async () => {
-           const selmodh4 = document.getElementById("selmodh4");
-           selmodh4.textContent = "Selected Module: " + this._utils.selectedModule;
-           this._selectedModule = await loadModule(this._utils.selectedModule);
-           this._mtimetable = this._selectedModule["timetable"];
-           this._uattendedObj = this.getAttObjfromArray(this.getUserInfo()["attended"], this._selectedModule["name"]);
-           document.getElementById("analytics-data-container").innerHTML = "";
-           (document.getElementById("tablebutton") as HTMLButtonElement).disabled = false;
-           //(document.getElementById("graphbutton") as HTMLButtonElement).disabled = false;
-           await this.initModuleAttendanceRateGraph();
+            if(this._utils.selectedModule !== null) {
+                const selmodh4 = document.getElementById("selmodh4");
+                selmodh4.textContent = "Selected Module: " + this._utils.selectedModule;
+                this._selectedModule = await loadModule(this._utils.selectedModule);
+                this._mtimetable = this._selectedModule["timetable"];
+                this._uattendedObj = this.getAttObjfromArray(this.getUserInfo()["attended"], this._selectedModule["name"]);
+                document.getElementById("analytics-data-container").innerHTML = "";
+                for(let i = 0; i < this._controlButtons.length; i++) {
+                    this._controlButtons[i].disabled = false;
+                }
+                await this.initModuleAttendanceRateGraph();
+            }
         });
     }
 
-    displayTable() {
-        this.initUserTable();
+    private async initUserTable() {
+        const response: object = JSON.parse(await getUserTableData(this.getUserInfo()["username"], this._selectedModule["name"]));
+        this.initTable(response["headStrings"], response["bodyStrings"]);
     }
 
-    private initUserTable() {
-        const tbody = document.getElementById("tablebody");
-        this._mtimetable.map((time, i) => {
-            const tr = document.createElement("tr");
+    private async initModuleTable() {
+        const response: object = JSON.parse(await getModuleTableData(this._selectedModule["name"]));
+        this.initTable(response["headStrings"], response["bodyStrings"]);
+    }
+
+    private initTable(headStrings: string[], bodyStrings: string[][]) {
+        this._component.displayTable();
+        const thead = document.getElementById("tablehead");
+        thead.innerHTML = "";
+        const tbody =  document.getElementById("tablebody");
+        tbody.innerHTML = "";
+        const headTr = document.createElement("tr");
+        headStrings.map(name => {
             const th = document.createElement("th");
-            th.scope = "row";
-            th.innerHTML = (i+1).toString();
-            tr.appendChild(th);
-            const name = document.createElement("td");
-            if(i === 0) {
-                name.innerHTML = this._selectedModule["name"];
-            } else {
-                name.innerHTML = "-";
-            }
-            tr.appendChild(name);
-            const date = document.createElement("td");
-            date.innerHTML = new Date(time).toDateString();
-            tr.appendChild(date);
-            const attended = document.createElement("td");
-            const late = document.createElement("td");
-            if(this._uattendedObj === null) {
-                attended.innerHTML = "X";
-                late.innerHTML = "?";
-            } else {
-                const usrAttendedDates: Date[] = this._uattendedObj["attended"];
-                let located: Date = null;
-                usrAttendedDates.map((usrTime, i) => {
-                    if(usrTime === time) {
-                        located = usrTime;
-                    }
-                });
-                if(located !== null) {
-                    attended.innerHTML = "✓";
-                    late.innerHTML = (((new Date(time).getTime() - new Date(located).getTime()) / 1000) / 60) + " minutes";
+            th.scope = "col";
+            th.innerHTML = name;
+            headTr.appendChild(th);
+        });
+
+        thead.appendChild(headTr);
+
+        bodyStrings.map(arr => {
+            const tr = document.createElement("tr");
+            arr.map((name, i) => {
+                if(i === 0) {
+                    const th = document.createElement("th");
+                    th.scope = "row";
+                    th.innerHTML = name;
+                    tr.appendChild(th);
                 } else {
-                    attended.innerHTML = "X";
-                    late.innerHTML = "?";
+                    const td = document.createElement("td");
+                    td.innerHTML = name;
+                    tr.appendChild(td);
                 }
-            }
-            tr.appendChild(attended);
-            tr.appendChild(late);
+            });
+
             tbody.appendChild(tr);
-        })
-    }
-
-    private initElevatedTable() {
-
+        });
     }
 
     private async initModuleAverageAttendanceRateGraph() {
@@ -131,9 +159,7 @@ export class AnalyticsLogic {
 
     private async initModuleAttendanceRateGraph() {
         const response: object = JSON.parse(await getModuleAttendanceRateData(this._selectedModule["name"]));
-        await this.initGraph("userAttendanceRateChart", Type.Bar, response["graph"], false, async () => {
-            //await this.initAttendanceRateGraphwData();
-        }, response);
+        await this.initGraph("userAttendanceRateChart", Type.Bar, response["graph"], false, true, response);
     }
 
     private async initAttendanceRateGraph() {
@@ -150,16 +176,20 @@ export class AnalyticsLogic {
             labels: response["mlabels"],
             datasets: [{
                 label: `${name} | ${this._selectedModule["name"]}`,
-                data: data[clickedIndex]["data"]
+                data: data["enrolledAttendanceRate"][clickedIndex]["data"]
+            },{
+                label: `${name} | Predicted ${this._selectedModule["name"]}`,
+                data: data["predEnrolledAttendanceRate"][clickedIndex],
+                borderDash: [10,5]
             }]
         };
 
-        await this.initGraph("attendanceRateChart", Type.Line, chartData, true);
+        await this.initGraph("attendanceRateChart", Type.Line, chartData, false);
     }
 
     private async initGraph(id: string, type: Type, data: ChartData, replace: boolean
-                            , onClick?: (...args: any[]) => any, response?: object) {
-        document.getElementById("analytics-data-container").innerHTML = "";
+                            , wData?: boolean, response?: object) {
+        this._component.displayGraph();
         const container = this._component.container;
         const chart = document.createElement("canvas");
         chart.id = id;
@@ -172,21 +202,38 @@ export class AnalyticsLogic {
                 typeDef = "line";
                 break;
         }
-        const chartDef = new Chart(chart, {
-            type: typeDef,
-            data: data,
-            options: {
-                scales: {
-                    y: {
-                        min: 0,
-                        max: 100
+
+        let chartDef = null;
+        if(wData) {
+            chartDef = new Chart(chart, {
+                type: typeDef,
+                data: data,
+                options: {
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100
+                        }
+                    },
+                    onClick: async (event: ChartEvent, elements: ActiveElement[], chart: Chart) => {
+                        await this.initAttendanceRateGraphwData(elements, response, chart)
                     }
                 }
-            }
-        })
+            })
 
-        if(typeof onClick !== "undefined") {
-            chartDef.options.onClick(onClick(chartDef.getActiveElements(), response, chartDef));
+        } else {
+            chartDef = new Chart(chart, {
+                type: typeDef,
+                data: data,
+                options: {
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            })
         }
 
         if(replace) {
