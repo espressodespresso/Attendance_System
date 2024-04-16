@@ -25,4 +25,5 @@ export const Logs = {
     // AnalyticsService
     AttendanceData: "User attendance data found",
     ModuleAttendanceData: "Module attendance data found and compiled",
+
 }

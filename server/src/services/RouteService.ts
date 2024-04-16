@@ -7,13 +7,11 @@ import {Role} from "../enums/Role.enum";
 import {AccountService} from "./AccountService";
 const cookie = require('cookie')
 
-const authService = new AuthService();
-
 export class RouteService {
 
     async handleErrors(c: any, ac: RoleAuth , innerFunc: (...args: any[]) => any) {
         try {
-            const objResponse = authService.verifyRoleAuth(ac, this.getCookiesArray(c));
+            const objResponse = new AuthService().verifyRoleAuth(ac, this.getCookiesArray(c));
             switch (objResponse["status"]) {
                 case 200:
                     return innerFunc();
@@ -59,7 +57,7 @@ export class RouteService {
         for(let i = 0; i < cookies.length; i++) {
 
             if(cookies[i].startsWith(`${name}=`)) {
-                return  cookies[i].replace(`${name}=`, '');
+                return cookies[i].replace(`${name}=`, '');
             }
         }
 
@@ -71,7 +69,7 @@ export class RouteService {
     }
 
     async setGenRefreshToken(c: any, fingerprint: string, username: string) {
-        const token: string = await this.setGenToken(c, "refresh_token", fingerprint, process.env.SECRET, 1800);
+        const token: string = await this.setGenToken(c, "refresh_token", fingerprint, process.env.REFRESH_SECRET, 1800);
         await new AccountService().storeRefreshToken(token, username, fingerprint);
     }
 

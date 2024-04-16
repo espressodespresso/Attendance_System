@@ -7,12 +7,14 @@ export class Utils {
 
     constructor() {
         this.mongoService = new MongoService;
+        (async () => {
+            await this.checkRefreshTokens();
+        })();
     }
 
     async checkRefreshTokens() {
-        const result = await setTimeout(15*60000, 'TASK: Cleared uncleared expired tokens');
-        await this.mongoService.handleConnection
-        (async () => {
+        setInterval(async () => {
+            let deleted: number = 0;
             const response = await this.mongoService.findall(Collection.token);
             if(response["status"]) {
                 const tokens: object[] = response["result"];
@@ -21,11 +23,14 @@ export class Utils {
                     const expiry: Date = tokenObj["expiry"];
                     if(new Date(expiry) < new Date()) {
                         const query = { "refresh_token": tokenObj["refresh_token"] };
-                        await this.mongoService.deleteOne(query, Collection.token);
+                        const innerResponse: object = await this.mongoService.deleteOne(query, Collection.token);
+                        if(innerResponse["status"]) {
+                            deleted++;
+                        }
                     }
                 }
             }
-        });
-        console.log(result);
+            console.log(`Server: Cleaned up ${deleted} expired tokens`);
+        }, 30*60000);
     }
 }

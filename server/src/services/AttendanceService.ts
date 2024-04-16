@@ -6,10 +6,10 @@ import {Errors} from "../utilities/Errors";
 import {ModuleService} from "./ModuleService";
 
 export class AttendanceService {
-    private mongoService: MongoService = null;
+    private _mongoService: MongoService = null;
     
     constructor() {
-        this.mongoService = new MongoService;
+        this._mongoService = new MongoService;
     }
 
     private generateCode(): number {
@@ -61,10 +61,10 @@ export class AttendanceService {
     }
 
     private async locateActiveCode(code: number): Promise<object> {
-        const response: object = await this.mongoService.handleConnection
+        const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const query = { active_code: code };
-            return await this.mongoService.findOne(query, Collection.attendance);
+            return await this._mongoService.findOne(query, Collection.attendance);
         });
 
         return response["status"];
@@ -88,9 +88,9 @@ export class AttendanceService {
             attended: attended
         }
 
-        const response: object = await this.mongoService.handleConnection
+        const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
-            return await this.mongoService.insertOne(data, Collection.attendance);
+            return await this._mongoService.insertOne(data, Collection.attendance);
         });
 
         if(response["status"]) {
@@ -114,10 +114,10 @@ export class AttendanceService {
                 attended: attended
             }
 
-            const response: object = await this.mongoService.handleConnection
+            const response: object = await this._mongoService.handleConnection
             (async (): Promise<object> => {
                 const query = { active_code: active_code }
-                return await this.mongoService.replaceOne(query, attendance, Collection.attendance);
+                return await this._mongoService.replaceOne(query, attendance, Collection.attendance);
             });
 
             if(response["status"]) {
@@ -156,10 +156,10 @@ export class AttendanceService {
             },
         };
 
-        const response: object = await this.mongoService.handleConnection
+        const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const query = { active_code: active_code.toString() };
-            return await this.mongoService.updateOne(query, update, Collection.attendance);
+            return await this._mongoService.updateOne(query, update, Collection.attendance);
         });
 
         if(!response["status"]) {
@@ -184,63 +184,16 @@ export class AttendanceService {
     }
 
     async locateAttended(module_name: string, date: Date): Promise<object> {
-        const response: object = await this.mongoService.handleConnection
+        const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const query = {
                 module: module_name,
                 date: new Date(date).toISOString()
             };
-            return await this.mongoService.findOne(query, Collection.attendance);
+            return await this._mongoService.findOne(query, Collection.attendance);
         });
 
         return response["result"];
     }
 
 }
-
-/*export function generateCode(): number {
-    return Math.round(Math.random() * (99999 - 10000) + 10000);
-}
-
-export async function updateUserAttendance(username: string,attendance: object[], module_name: string, date: Date): Promise<boolean> {
-    const located: object[] = attendance.filter(object => object["module"] === module_name);
-
-    if(located.length > 0) {
-        // Module with that name is found
-        const module: object = located[0];
-        const objAttended: Date[] = module["attended"];
-        // Attended date is pushed into the array
-        objAttended.push(date);
-        // Create the replacment object with the updated date attended
-        const updatedAttendance: object = {
-            module: module_name,
-            attended: objAttended
-        }
-        // Replace the object with the updated attendance object
-        attendance[attendance.indexOf(module)] = updatedAttendance;
-    } else {
-        // Module with the name isn't found hence has not attended before
-        // Define a new date array and attendance object
-        const attended: Date[] = [];
-        attended.push(date);
-        const attendanceObj: object = {
-            module: module_name,
-            attended: attended
-        };
-        // Attended date is pushed into the array
-        attendance.push(attendanceObj);
-    }
-
-    const update = {
-        $set: {
-            attended: attendance
-        },
-    };
-
-    // Update the section within the users document in the database
-    if(await new AccountService().updateUser(username, update)) {
-        return true;
-    }
-
-    return false;
-}*/

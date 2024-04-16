@@ -5,15 +5,35 @@ import {Errors} from "../utilities/Errors";
 import {Logs} from "../utilities/Logs";
 
 export class AnalyticsService {
-    private mongoService: MongoService = null;
-
+    private _mongoService: MongoService = null;
 
     constructor() {
-        this.mongoService = new MongoService();
+        this._mongoService = new MongoService();
     }
 
     async getUserAttendanceRateData(username: string, module_name: string): Promise<object> {
-        const comparativeData: object = await this.getComparativeData(username, module_name);
+        const comparativeData: object = await this._mongoService.handleConnection
+        (async (): Promise<object> => {
+            const userQuery = { username: username };
+            const userData: object = await this._mongoService.findOne(userQuery, Collection.users);
+
+            if(!userData["status"]) {
+                return null;
+            }
+
+            const moduleQuery = { name: module_name };
+            const moduleData: object = await this._mongoService.findOne(moduleQuery, Collection.module);
+
+            if(!moduleData["status"]) {
+                return null;
+            }
+
+            return {
+                userData: userData["result"],
+                moduleData: moduleData["result"]
+            }
+        });
+
         if(comparativeData === null) {
             return this.messageObj(Errors.ComparativeData, null);
         }
@@ -30,31 +50,38 @@ export class AnalyticsService {
             datasets: [{
                 label: moduleData["name"] + " Attendance Rate",
                 data: userAttendanceRate["data"],
+            }, {
+                label: moduleData["name"] + " Predicted Attendance Rate",
+                data: await this.predictFutureAttendanceRate(userAttendanceRate["data"]),
+                borderDash: [10,5]
             }],
             labels: dateDataPoints["labels"]
         })
     }
 
     async getModuleAttendanceRate(module_name: string): Promise<object> {
-        const response: object = await this.mongoService.handleConnection
+        const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const moduleQuery = {name: module_name};
-            const moduleData: object = await this.mongoService.findOne(moduleQuery, Collection.module);
+            const moduleResult: object = await this._mongoService.findOne(moduleQuery, Collection.module);
+            const moduleData: object = moduleResult["result"];
 
-            if (moduleData === null) {
-                return this.messageObj(Errors.ComparativeData, null);
+            if (!moduleResult["status"]) {
+                return null;
             }
 
             const mtimetable: Date[] = moduleData["timetable"];
             const dateDataPoints: object = this.getDateDataPoints(mtimetable);
-
             const enrolledArray: string[] = moduleData["enrolled"];
+            let enrolledNames: string[] = [];
             let enrolledAttendanceRate: object[] = [];
             for (let i = 0; i < enrolledArray.length; i++) {
                 const userQuery = {username: enrolledArray[i]};
-                const userData: object = await this.mongoService.findOne(userQuery, Collection.users);
+                const userResult: object = await this._mongoService.findOne(userQuery, Collection.users);
+                const userData: object = userResult["result"];
+                enrolledNames.push(`${userData["first_name"]}, ${(userData["last_name"])[0]} (${enrolledArray[i]})`);
 
-                if (userData === null) {
+                if (!userResult["status"]) {
                     enrolledAttendanceRate.push(null);
                 }
 
@@ -64,20 +91,29 @@ export class AnalyticsService {
 
             return {
                 enrolledAttendanceRate: enrolledAttendanceRate,
-                emrolledArray: enrolledArray
-            };
+                enrolledNames: enrolledNames,
+                mlabels: dateDataPoints["labels"]
+            }
         });
 
         if(response === null) {
             return null;
         }
 
-
         const data = [];
         const enrolledAttendanceRate: object[] = response["enrolledAttendanceRate"];
         enrolledAttendanceRate.map(obj => {
             let objData: number[] = obj["data"];
-            data.push([0, objData[objData.length - 1]])
+            let latest: number = null;
+            let increment: number = 1;
+            while(latest == null ) {
+                latest = objData[objData.length - increment];
+                increment++;
+                if(increment === objData.length+1) {
+                    break;
+                }
+            }
+            data.push(latest);
         })
 
         return {
@@ -89,9 +125,52 @@ export class AnalyticsService {
                         data: data
                     }
                 ],
-                labels: (response["enrolledArray"] as string[])
+                labels: (response["enrolledNames"] as string[])
             },
-            data: enrolledAttendanceRate
+            data: enrolledAttendanceRate,
+            mlabels: response["mlabels"]
+        }
+    }
+
+    async getAverageAttendanceRate(module_name: string): Promise<object> {
+        const response: object = await this.getModuleAttendanceRate(module_name);
+        const data: object[] = response["data"];
+        const newData: number[] = [];
+        data.map((obj, x) => {
+            const tempData: number[] = obj["data"];
+            tempData.map((num, i) => {
+                if(x === 0) {
+                    newData.push(num);
+                } else {
+                    if(newData[i] !== null) {
+                        newData[i] += num;
+                    }
+                }
+            });
+        });
+
+        newData.map((num, i) => {
+            if(newData[i] !== null) {
+                newData[i] = (num / data.length)
+            }
+        })
+
+        return {
+            message: Logs.ModuleAttendanceData,
+            data: {
+                datasets: [
+                    {
+                        label: module_name,
+                        data: newData
+                    },
+                    {
+                        label: module_name + " Predicted Attendance Rate",
+                        data: await this.predictFutureAttendanceRate(newData),
+                        borderDash: [10,5]
+                    }
+                ],
+                labels: response["mlabels"]
+            }
         }
     }
 
@@ -162,6 +241,33 @@ export class AnalyticsService {
         }
     }
 
+    private async predictFutureAttendanceRate(data: number[]): Promise<number[]> {
+        const newData: number[] = [];
+        let currentRate: number = 0;
+        for(let i = 0; i < data.length; i++) {
+            if(data[i+1] === null) {
+                currentRate = data[i];
+                newData.push(data[i]);
+                break;
+            } else {
+                newData.push(null)
+            }
+        }
+
+        console.log(newData);
+
+        const trendPercentage = ((currentRate - 100)/ 100) * 100;
+        for(let i = newData.length-1; i < data.length; i++) {
+            if(trendPercentage >= 0) {
+                newData.push(newData[i] - trendPercentage);
+            } else {
+                newData.push(newData[i] + trendPercentage);
+            }
+        }
+
+        return newData;
+    }
+
     private messageObj(message: string, data: ChartData): object {
         return {
             message: message,
@@ -177,29 +283,5 @@ export class AnalyticsService {
         })
 
         return null;
-    }
-
-    private async getComparativeData(username: string, module_name: string): Promise<object> {
-        return await this.mongoService.handleConnection
-        (async (): Promise<object> => {
-            const userQuery = { username: username };
-            const userData: object = await this.mongoService.findOne(userQuery, Collection.users);
-
-            if(!userData["status"]) {
-                return null;
-            }
-
-            const moduleQuery = { name: module_name };
-            const moduleData: object = await this.mongoService.findOne(moduleQuery, Collection.module);
-
-            if(!moduleData["status"]) {
-                return null;
-            }
-
-            return {
-                userData: userData["result"],
-                moduleData: moduleData["result"]
-            }
-        });
     }
 }

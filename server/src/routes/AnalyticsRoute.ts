@@ -37,3 +37,17 @@ analyticsRoute.get('/attendance/:module', async (c) => {
         return c.json(JSON.stringify(response));
     });
 });
+
+analyticsRoute.get('/attendance/avg/:module/data', async (c) => {
+    return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
+        const response: object = await analyticsService.getAverageAttendanceRate(routeService.getParam(c, 'module'));
+        if(response === null) {
+            c.status(400);
+            console.error(Errors.CodeError);
+            return c.text(Errors.CodeError);
+        }
+
+        console.log(response["message"]);
+        return c.json(JSON.stringify(response));
+    });
+});

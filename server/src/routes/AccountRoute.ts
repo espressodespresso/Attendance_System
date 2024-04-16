@@ -13,7 +13,7 @@ const accountService = new AccountService();
 export const accountRoute = new Hono();
 
 accountRoute.get('/', async (c) => {
-    return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
+    return await routeService.handleErrors(c, {authorised: [Role.Exclude]}, async (): Promise<Response> => {
         const token: string = routeService.getAuthToken(c);
         if(token === null) {
             console.error(Errors.NoAuthToken)
@@ -32,7 +32,7 @@ accountRoute.get('/', async (c) => {
 });
 
 accountRoute.post('/auth', async (c) => {
-    return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
+    return await routeService.handleErrors(c, {authorised: [Role.Exclude]}, async (): Promise<Response> => {
         const body: JSON = await routeService.getBody(c);
         const refresh_token: string = routeService.getRefreshToken(c);
         if(refresh_token === null) {
@@ -65,7 +65,7 @@ accountRoute.get('/refresh', async (c) => {
 
         const data = await accountService.getUserInfobyRefreshToken(refresh_token);
         const fingerprint = decode(refresh_token).payload;
-        await accountService.deleteRefreshToken(refresh_token);
+        await accountService.deleteRefreshToken(data["username"]);
         await routeService.setGenRefreshToken(c, fingerprint, data["username"]);
         console.log(Logs.AccountRefreshRoute);
         return c.text(Logs.AccountRefreshRoute);

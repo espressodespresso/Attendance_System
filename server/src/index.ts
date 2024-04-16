@@ -14,6 +14,8 @@ const myEnv = dotenv.config({ processEnv: {} });
 dotenvExpand.expand(myEnv);
 
 const app = new Hono()
+new Utils();
+
 
 app.use('/login', cors({
     origin: ['http://localhost:63342', 'http://localhost:8080'],
@@ -58,6 +60,7 @@ app.use('/analytics/*', cors({
     allowMethods: ['GET'],
 }));
 app.route('/analytics', analyticsRoute);
+
 
 serve({
     fetch: app.fetch,

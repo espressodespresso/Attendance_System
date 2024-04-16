@@ -74,13 +74,6 @@ function saveUserInfoLocal(payload: object) {
     }
 }
 
-//let x = new HomeComponent(JSON.parse(localStorage.getItem("userInfo"))["role"])
-//let x = new AuthorativeModule();
-//x.createModule();
-//x.editModule();
-//let x = new UserModComponent();
-//let x = new UserHome();
-
 window.onload = loadItems;
 
 export default fpPromise;

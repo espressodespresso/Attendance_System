@@ -14,14 +14,18 @@ export const elevatedRoleAuth: RoleAuth = {
     authorised: [Role.Lecturer, Role.IT, Role.AdministrativeFM]
 }
 
-const mongoService = new MongoService();
-
 export class AuthService {
+    private _mongoService: MongoService = null;
+
+    constructor() {
+        this._mongoService = new MongoService();
+    }
+
     async login(username: string, password: string) {
-        const response: object = await mongoService.handleConnection
+        const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const query = { username: username };
-            return await mongoService.findOne(query, Collection.users);
+            return await this._mongoService.findOne(query, Collection.users);
         });
 
         let obj = {

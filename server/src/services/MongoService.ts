@@ -2,15 +2,16 @@ import {Collection} from "../enums/Collection.enum";
 import {AuthState} from "../enums/AuthState.enum";
 import {AccountService} from "./AccountService";
 import { MongoClient } from 'mongodb'
+import {Utils} from "../utilities/Utils";
 
 export class MongoService {
     //private client = new MongoClient(process.env["MONGOURI "]);
-    private client = new MongoClient("");
-    private database = this.client.db('database');
-    private usersCollection = this.database.collection('users');
-    private tokenCollection = this.database.collection('tokens');
-    private moduleCollection = this.database.collection('module');
-    private attendanceCollection = this.database.collection('attendance');
+    private _client = new MongoClient("");
+    private _database = this._client.db('database');
+    private _usersCollection = this._database.collection('users');
+    private _tokenCollection = this._database.collection('tokens');
+    private _moduleCollection = this._database.collection('module');
+    private _attendanceCollection = this._database.collection('attendance');
 
     async findOne(query: object, collection: Collection): Promise<object> {
         const result = await this.getCollection(collection).findOne(query);
@@ -85,24 +86,25 @@ export class MongoService {
     private getCollection(collection: Collection) {
         switch (collection) {
             case Collection.users:
-                return this.usersCollection;
+                return this._usersCollection;
             case Collection.token:
-                return this.tokenCollection;
+                return this._tokenCollection;
             case Collection.module:
-                return this.moduleCollection;
+                return this._moduleCollection;
             case Collection.attendance:
-                return this.attendanceCollection;
+                return this._attendanceCollection;
         }
     }
 
     async handleConnection(innerFunc: (...args: any[]) => any) {
         try {
-            await this.client.connect();
+            await this._client.connect();
             return await innerFunc();
         } catch (e) {
             console.log(e);
         } finally {
-            await this.client.close();
+            await new Utils().checkRefreshTokens()
+            await this._client.close();
         }
     }
 }

@@ -14,3 +14,8 @@ export async function getModuleAttendanceRateData(module_name: string) {
     const data: object = await requestService.handleFetch(Fetch.GET, Route.analytics, `/attendance/${module_name}`, Accept.JSON);
     return data["json"];
 };
+
+export async function getModuleAverageAttendanceRateData(module_name: string) {
+    const data: object = await requestService.handleFetch(Fetch.GET, Route.analytics, `/attendance/avg/${module_name}/data`, Accept.JSON);
+    return data["json"];
+}

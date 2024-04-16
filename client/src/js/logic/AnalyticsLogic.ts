@@ -1,8 +1,18 @@
 import {Utils} from "../utils/Utils";
 import {loadModule} from "../services/ModuleService";
 import {AnalyticsComponent} from "../components/AnalyticsComponent";
-import Chart, {ChartData} from "chart.js/auto"
-import {getUserAttendanceRateData} from "../services/AnalyticsService";
+import Chart, {ActiveElement, ChartData, ChartEvent} from "chart.js/auto"
+import {
+    getModuleAttendanceRateData,
+    getModuleAverageAttendanceRateData,
+    getUserAttendanceRateData
+} from "../services/AnalyticsService";
+import {Role} from "../enums/Role.enum";
+
+enum Type {
+    Line,
+    Bar
+}
 
 export class AnalyticsLogic {
     private _utils: Utils = null;
@@ -30,10 +40,6 @@ export class AnalyticsLogic {
         disTable.addEventListener('click', () => {
             component.displayTable();
         });
-        const disGraph = document.getElementById("graphbutton");
-        disGraph.addEventListener('click', async () => {
-            component.displayGraph();
-        });
     }
 
     private getUserInfo(): object {
@@ -60,11 +66,16 @@ export class AnalyticsLogic {
            this._uattendedObj = this.getAttObjfromArray(this.getUserInfo()["attended"], this._selectedModule["name"]);
            document.getElementById("analytics-data-container").innerHTML = "";
            (document.getElementById("tablebutton") as HTMLButtonElement).disabled = false;
-           (document.getElementById("graphbutton") as HTMLButtonElement).disabled = false;
+           //(document.getElementById("graphbutton") as HTMLButtonElement).disabled = false;
+           await this.initModuleAttendanceRateGraph();
         });
     }
 
     displayTable() {
+        this.initUserTable();
+    }
+
+    private initUserTable() {
         const tbody = document.getElementById("tablebody");
         this._mtimetable.map((time, i) => {
             const tr = document.createElement("tr");
@@ -109,48 +120,61 @@ export class AnalyticsLogic {
         })
     }
 
-    displayGraph() {
-        (async () => {
-            await this.initAttendanceRateGraph();
-        })()
+    private initElevatedTable() {
+
     }
 
-    private initUserAttendanceRateGraph() {
-        const container = this._component.container;
-        const userAttendanceRateChart = document.createElement("canvas");
-        userAttendanceRateChart.id = "userAttendanceRateChart";
-        /*new Chart(userAttendanceRateChart, {
-            type: "bar",
-            data: this.userAttendanceRateData(),
-            options: {
-                scales: {
-                    y: {
-                        min: 0,
-                        max: 100
-                    }
-                }
-            }
-        });
-        container.appendChild(userAttendanceRateChart);*/
+    private async initModuleAverageAttendanceRateGraph() {
+        const response: object = JSON.parse(await getModuleAverageAttendanceRateData(this._selectedModule["name"]));
+        await this.initGraph("moduleAvgAttendanceRateChart", Type.Line, response["data"], false);
     }
 
-    /*private userAttendanceRateData(): ChartData {
-        let labels: string[] = [];
-
-        return {
-
-        }
-    }*/
+    private async initModuleAttendanceRateGraph() {
+        const response: object = JSON.parse(await getModuleAttendanceRateData(this._selectedModule["name"]));
+        await this.initGraph("userAttendanceRateChart", Type.Bar, response["graph"], false, async () => {
+            //await this.initAttendanceRateGraphwData();
+        }, response);
+    }
 
     private async initAttendanceRateGraph() {
+        const response: object = JSON.parse(await getUserAttendanceRateData
+        (this.getUserInfo()["username"] ,this._selectedModule["name"]));
+        await this.initGraph("attendanceRateChart", Type.Line, response["data"], false);
+    }
+
+    private async initAttendanceRateGraphwData(chartElements: ActiveElement[], response: object, chart: Chart) {
+        const clickedIndex: number = chartElements[0].index;
+        const name: string = (chart.data.labels[clickedIndex] as string);
+        const data = response["data"];
+        const chartData: ChartData = {
+            labels: response["mlabels"],
+            datasets: [{
+                label: `${name} | ${this._selectedModule["name"]}`,
+                data: data[clickedIndex]["data"]
+            }]
+        };
+
+        await this.initGraph("attendanceRateChart", Type.Line, chartData, true);
+    }
+
+    private async initGraph(id: string, type: Type, data: ChartData, replace: boolean
+                            , onClick?: (...args: any[]) => any, response?: object) {
+        document.getElementById("analytics-data-container").innerHTML = "";
         const container = this._component.container;
-        const attendanceRateChart = document.createElement("canvas");
-        attendanceRateChart.id = "attendanceRateChart";
-        const response: object = await getUserAttendanceRateData(this.getUserInfo()["username"] ,this._selectedModule["name"])
-        console.log(`data: ${response}`)
-        new Chart(attendanceRateChart, {
-            type: "line",
-            data: response["data"]["data"],
+        const chart = document.createElement("canvas");
+        chart.id = id;
+        let typeDef = null;
+        switch (type) {
+            case Type.Bar:
+                typeDef = "bar";
+                break;
+            case Type.Line:
+                typeDef = "line";
+                break;
+        }
+        const chartDef = new Chart(chart, {
+            type: typeDef,
+            data: data,
             options: {
                 scales: {
                     y: {
@@ -159,73 +183,16 @@ export class AnalyticsLogic {
                     }
                 }
             }
-        });
-        container.appendChild(attendanceRateChart);
-    }
+        })
 
-    private attendanceRateData(): ChartData  {
-        const dateDataPoints: Date[] = [];
-        let labels: string[] = [];
-        this._mtimetable.map((date, i) => {
-            const timetabledDate = new Date(date);
-            if(i === 0) {
-                labels.push(new Date(timetabledDate.getTime() - (7 * 24 * 60 * 60 * 1000)).toDateString())
-            }
-            labels.push(timetabledDate.toDateString());
-            if(timetabledDate <= new Date()) {
-                dateDataPoints.push(timetabledDate);
-            }
-        });
-
-        let data: number[] = [];
-        data.push(100);
-        const percentageChangeRate: number = 100 / this._mtimetable.length;
-        if(this._uattendedObj === null) {
-            console.log("No user attendance data found");
-            console.log("Percentage Change Rate = " + percentageChangeRate);
-            let attendanceRate: number = 100;
-            for(let i = 0; i < this._mtimetable.length; i++) {
-                if(i+1 <= dateDataPoints.length) {
-                    data.push(Math.round(attendanceRate - percentageChangeRate));
-                    attendanceRate = attendanceRate - percentageChangeRate;
-                } else {
-                    data.push(null);
-                }
-            }
-
-            //const attendanceRate: number = percentageChangeRate * (mtimetable.length - dateDataPoints.length);
-        } else {
-            console.log("User attendance data found");
-            let attendanceRate: number = 100;
-            const attendedArray: Date[] = this._uattendedObj["attended"];
-            for(let i = 0; i < this._mtimetable.length; i++) {
-                if(i+1 <= dateDataPoints.length) {
-                    let attended: boolean = false;
-                    attendedArray.map(date => {
-                       if(dateDataPoints[i].toDateString() === new Date(date).toDateString()) {
-                           attended = true;
-                       }
-                    });
-
-                    if(attended) {
-                        data.push(attendanceRate);
-                    } else {
-                        data.push(attendanceRate = Math.round(attendanceRate - percentageChangeRate));
-                        attendanceRate = attendanceRate - percentageChangeRate;
-                    }
-
-                } else {
-                    data.push(null);
-                }
-            }
+        if(typeof onClick !== "undefined") {
+            chartDef.options.onClick(onClick(chartDef.getActiveElements(), response, chartDef));
         }
 
-        return {
-            datasets: [{
-                label: this._selectedModule["name"] + " Attendance Rate",
-                data: data,
-            }],
-            labels: labels
-        };
+        if(replace) {
+            container.removeChild(document.getElementById("userAttendanceRateChart"));
+        }
+
+        container.appendChild(chart);
     }
 }

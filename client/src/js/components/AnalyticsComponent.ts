@@ -52,7 +52,6 @@ export class AnalyticsComponent {
         const attendanceRateChart = document.createElement("canvas");
         attendanceRateChart.id = "attendanceRateChart";
         container.appendChild(attendanceRateChart);
-        this._analyticsLogic.displayGraph();
     }
 
     private getContainer(): HTMLElement {
