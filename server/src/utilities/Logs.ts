@@ -14,9 +14,13 @@ export const Logs = {
     AccountUpdate: "Account route update executed successfully",
     // ModuleRoute
     ModuleCreation: "Module created successfully",
+    ModuleLoaded: "Module loaded successfully",
+    ModulesLoaded: "Modules loaded successfully",
     ModuleUpdate: "Module updated successfully",
     ModuleDelete: "Module deleted successfully",
     ModuleUpdateDB: "Module update to other collections successful",
+    ModuleExist: "Module exists in database",
+    UpdatedModuleList: "Updated module list successfully",
     // AttendanceRoute
     CodeGenerated: "Code generated for module",
     CodeTerminated: "Code terminated for module",
@@ -26,5 +30,8 @@ export const Logs = {
     // AnalyticsService
     AttendanceData: "User attendance data found",
     ModuleAttendanceData: "Module attendance data found and compiled",
+
+
+    // Route Responses
 
 }

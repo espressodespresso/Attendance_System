@@ -1,6 +1,6 @@
 import {generateAttendanceCode} from "../services/AttendanceService";
 import {AttendanceLogic} from "../logic/AttendanceLogic";
-import {Utils} from "../utils/Utils";
+import {Utils} from "../utilities/Utils";
 
 export class AttendanceComponent {
     private _index_container_form: HTMLElement;

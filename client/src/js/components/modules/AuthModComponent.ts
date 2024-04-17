@@ -2,7 +2,7 @@ import flatpickr from "flatpickr";
 import {AuthModLogic} from "../../logic/AuthModLogic";
 import {ModuleAction} from "../../enums/ModuleAction.enum";
 import * as timers from "timers";
-import {Utils} from "../../utils/Utils";
+import {Utils} from "../../utilities/Utils";
 import {disableSpinner} from "../../index";
 
 export class AuthorativeModule {
@@ -14,7 +14,7 @@ export class AuthorativeModule {
         const row = document.createElement("div");
         row.classList.add("row");
         const col_3 = document.createElement("div");
-        col_3.classList.add("col-3", "p-3");
+        col_3.classList.add("col-md-5", "col-lg-5", "col-xl-3", "p-3");
         const module_controls = document.createElement("div");
         module_controls.classList.add("text-center", "p-4");
         module_controls.id = "module-controls";
@@ -61,7 +61,7 @@ export class AuthorativeModule {
         col_3.appendChild(module_controls);
         row.appendChild(col_3);
         const col_9 = document.createElement("div");
-        col_9.classList.add("col-9");
+        col_9.classList.add("col-md-7", "col-lg-7", "col-xl-9");
         const module_content = document.createElement("div");
         module_content.classList.add("text-center", "p-4", "justify-content-center");
         module_content.id = "module_content";

@@ -1,10 +1,10 @@
 import {attendActiveAttendance, generateAttendanceCode, terminateAttendanceCode} from "../services/AttendanceService";
-import {loadModule, loadModules} from "../services/ModuleService";
+import {loadModule} from "../services/ModuleService";
 import {AttendanceComponent} from "../components/AttendanceComponent";
-import {Role} from "../enums/Role.enum";
-import {Utils} from "../utils/Utils";
-import {ModuleAction} from "../enums/ModuleAction.enum";
+import {Utils} from "../utilities/Utils";
 import QRCode from 'qrcode'
+import {Alert} from "../enums/Alert.enum";
+
 const QrScanner = require('qr-scanner');
 
 export class AttendanceLogic {
@@ -42,7 +42,11 @@ export class AttendanceLogic {
             const code = codeInput.value;
             if(code !== "") {
                 const data = await attendActiveAttendance(parseInt(code));
-                console.log(data["json"]);
+                if(data["status"]) {
+                    this._utils.generateAlert(data["json"], Alert.Success);
+                } else {
+                    this._utils.generateAlert("", Alert.Danger);
+                }
             }
         });
         const scanbutton: HTMLButtonElement = document.getElementById("scanqrcode") as HTMLButtonElement;
@@ -59,7 +63,12 @@ export class AttendanceLogic {
             const qrScanner = new QrScanner(
                 video,
                 async (result) => {
-                    await attendActiveAttendance(parseInt(result))
+                    const data = await attendActiveAttendance(parseInt(result))
+                    if(data["status"]) {
+                        this._utils.generateAlert(data["json"], Alert.Success);
+                    } else {
+                        this._utils.generateAlert("", Alert.Danger);
+                    }
                     qrScanner.stop();
                 }
             );
@@ -110,8 +119,9 @@ export class AttendanceLogic {
         submitButton.addEventListener("click", async () => {
             if(this._selectedDate !== null) {
                 await this._attendanceComponent.authAttendanceCodeComponent(moduleName, this._selectedDate);
+                this._utils.generateAlert("Successfully generated attendance code.", Alert.Success);
             } else {
-                console.error("No date selected");
+                this._utils.generateAlert("No date selected", Alert.Warning)
             }
         });
     }

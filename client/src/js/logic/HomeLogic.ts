@@ -12,7 +12,16 @@ export class HomeLogic {
         this._payload = payload;
         (async () => {
             const userInfo: object = await this.getRandomAttendanceTrend();
-            await this.initLessonsTable();
+            if(userInfo === null) {
+                const container: HTMLElement = document.getElementById("index-side-container-tab2-content");;
+                this.initNoData(container);
+            } else {
+                try {
+                    await this.initLessonsTable();
+                } catch (e) {
+                    console.error(e);
+                }
+            }
             disableSpinner();
         })();
     }
@@ -22,26 +31,36 @@ export class HomeLogic {
         const payloadRole: Role =  userInfo["role"];
         const username: string = userInfo["username"];
         const module_list: string[] = userInfo["module_list"];
-        switch (payloadRole) {
-            case Role.Student: {
-                const module: object = await loadModule(module_list[Math.round(Math.random() * (module_list.length - 1))]);
-                const response: object = JSON.parse(await getUserAttendanceRateData(username, module["name"]));
-                this.initChart(response["data"], ChartType.Line);
-                break;
+        if(module_list.length === 0) {
+            const container: HTMLElement = document.getElementById("index-side-container-tab1-content");
+            this.initNoData(container);
+            return null;
+        }
+
+        try {
+            switch (payloadRole) {
+                case Role.Student: {
+                    const module: object = await loadModule(module_list[Math.round(Math.random() * (module_list.length - 1))]);
+                    const response: object = JSON.parse(await getUserAttendanceRateData(username, module["name"]));
+                    this.initChart(response["data"], ChartType.Line);
+                    break;
+                }
+                case Role.Lecturer: {
+                    const module: object = await loadModule(module_list[Math.round(Math.random() * (module_list.length - 1))]);
+                    const response: object = JSON.parse(await getModuleAttendanceRateData(module["name"]));
+                    this.initChart(response["graph"], ChartType.Bar);
+                    break;
+                }
+                case Role.AdministrativeFM:
+                case Role.IT:
+                    const modules: object[] = await loadModules();
+                    const module: object = modules[Math.round(Math.random() * (modules.length - 1))];
+                    const response: object = JSON.parse(await getModuleAttendanceRateData(module["name"]));
+                    this.initChart(response["graph"], ChartType.Bar);
+                    break;
             }
-            case Role.Lecturer: {
-                const module: object = await loadModule(module_list[Math.round(Math.random() * (module_list.length - 1))]);
-                const response: object = JSON.parse(await getModuleAttendanceRateData(module["name"]));
-                this.initChart(response["graph"], ChartType.Bar);
-                break;
-            }
-            case Role.AdministrativeFM:
-            case Role.IT:
-                const modules: object[] = await loadModules();
-                const module: object = modules[Math.round(Math.random() * (modules.length - 1))];
-                const response: object = JSON.parse(await getModuleAttendanceRateData(module["name"]));
-                this.initChart(response["graph"], ChartType.Bar);
-                break;
+        } catch (e) {
+            console.error(e);
         }
 
         return userInfo;
@@ -136,5 +155,13 @@ export class HomeLogic {
 
             tbody.appendChild(tr);
         });
+    }
+
+    private initNoData(container: HTMLElement) {
+        const h4 = document.createElement("h4");
+        container.innerHTML = "";
+        h4.textContent = "No Data";
+        container.appendChild(h4);
+        container.appendChild(document.createElement("br"))
     }
 }

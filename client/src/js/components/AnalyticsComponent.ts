@@ -1,4 +1,4 @@
-import {Utils} from "../utils/Utils";
+import {Utils} from "../utilities/Utils";
 import {AnalyticsLogic} from "../logic/AnalyticsLogic";
 import {disableSpinner} from "../index";
 
@@ -48,7 +48,7 @@ export class AnalyticsComponent {
 
     addControlbutton(name: string, id: string): HTMLButtonElement {
         const button = document.createElement("button");
-        button.classList.add("btn", "btn-outline-dark", "shift_left");
+        button.classList.add("btn", "btn-outline-dark");
         button.type = "button";
         button.id = id;
         button.textContent = name;

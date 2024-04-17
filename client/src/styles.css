@@ -1,39 +1,50 @@
 @import url("../node_modules/bootstrap/dist/css/bootstrap.min.css");
 #input-background-container{
-    height: 100vh;
-    width: 100%;
     background: linear-gradient(45deg, #4720b3, #575656, #b6014c, #7a003a);
     background-size: 300% 300%;
     animation: color 20s ease-in-out infinite;
+    height: 100vh;
+}
+
+#fixed-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 #login-container{
     /* With assistance from https://css.glass */
     background: rgba(180, 180, 180, 0.5);
-    height: 60vh;
-    width: 40vw;
     border-radius: 12px;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(6.4px);
     -webkit-backdrop-filter: blur(6.4px);
     border: 1px solid rgba(180, 180, 180, 0.8);
-    font-size: 0.7vw;
+
 }
 
-#login-container .flex-fill {
-    max-width: 50%;
-    padding: 2.5%;
-    align-self: center;
-    position: relative;
-    height: 100%;
+#login-container img {
+    width: fit-content;
+    display: flex;
+    align-items: center;
 }
 
-#login-container .flex-fill .btn {
-    height: 3rem;
+#login-container h1 {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+#login-container h3 {
+    font-size: 1.5rem;
 }
 
 .navbar {
-    background: rgba(122, 0, 59, 0.7);
+    background: rgba(180, 180, 180, 0.5);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(6.4px);
+    -webkit-backdrop-filter: blur(6.4px);
+    border: 1px solid rgba(180, 180, 180, 0.8);
 }
 
 #portal {
@@ -65,14 +76,19 @@ h3 {
     background: white;
 }
 
-#index-side-container {
+#index-side-container, #module-controls {
     border-radius: 16px;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(190, 0, 91, 0.58);
 }
 
-#index-content-container {
+#analytics-control-main {
+    background-color: rgba(182, 1, 76, 0.9);
+    color: white;
+}
 
+#analytics-control-secondary {
+    background-color: rgb(135, 135, 135);
 }
 
 #ulcmname {
@@ -105,7 +121,7 @@ h3 {
 }
 
 body {
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 /* Spinner via https://www.youtube.com/watch?v=q76TexbMXJg Tutorial */

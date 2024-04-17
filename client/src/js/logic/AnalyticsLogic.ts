@@ -1,4 +1,4 @@
-import {Utils} from "../utils/Utils";
+import {Utils} from "../utilities/Utils";
 import {loadModule} from "../services/ModuleService";
 import {AnalyticsComponent} from "../components/AnalyticsComponent";
 import Chart, {ActiveElement, ChartData, ChartEvent} from "chart.js/auto"
@@ -12,6 +12,7 @@ import {
 import {Role} from "../enums/Role.enum";
 import {ChartType} from "../enums/ChartType.enum";
 import {disableSpinner} from "../index";
+import {Alert} from "../enums/Alert.enum";
 
 export class AnalyticsLogic {
     private _utils: Utils = null;
@@ -101,6 +102,8 @@ export class AnalyticsLogic {
                     this._controlButtons[i].disabled = false;
                 }
                 await this.initModuleAttendanceRateGraph(this._component.container);
+            } else {
+                this._utils.generateAlert("", Alert.Danger);
             }
         });
     }

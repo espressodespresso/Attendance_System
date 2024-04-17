@@ -33,7 +33,6 @@ moduleRoute.post('/create', async (c) => {
            c.status(400);
            return c.json({message: Errors.ModuleExists});
        }
-
    })
 });
 

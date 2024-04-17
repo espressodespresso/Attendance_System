@@ -62,21 +62,13 @@ async function verifyPayload(): Promise<object> {
 
     if(document.title === "Login") {
         let loginButton = document.getElementById("loginButton");
-        //loginButton.addEventListener("click", username + password, false)
         loginButton.addEventListener("click", async function (){
-            let username = (document.getElementById("emailInput") as HTMLInputElement).value;
+            let username = (document.getElementById("usernameInput") as HTMLInputElement).value;
             let password = (document.getElementById("passwordInput") as HTMLInputElement).value;
             if(await verifyStatus(username, password, await getBrowserFingerprint())) {
                 window.location.href = "/attendance_system/client/src/index.html"
             }
         })
-    }
-}
-
-function saveUserInfoLocal(payload: object) {
-    if(localStorage.length >= 0) {
-        localStorage.clear();
-        localStorage.setItem("userInfo", JSON.stringify(payload));
     }
 }
 

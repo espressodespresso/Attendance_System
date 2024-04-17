@@ -480,7 +480,7 @@ export class AnalyticsService {
         let currentRate: number = 0;
         for(let i = 0; i < data.length; i++) {
             if(data[i+1] === null) {
-                currentRate = data[i];
+                currentRate = data[i] + data[i-1];
                 newData.push(data[i]);
                 break;
             } else {

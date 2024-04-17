@@ -1,13 +1,14 @@
 import {verifyUserExists} from "../services/AuthService";
-import {createModule, deleteModule, loadModule, loadModules, updateModule} from "../services/ModuleService";
+import {createModule, deleteModule, updateModule} from "../services/ModuleService";
 import {AuthorativeModule} from "../components/modules/AuthModComponent";
 import {ModuleAction} from "../enums/ModuleAction.enum";
-import {Role} from "../enums/Role.enum";
-import {Utils} from "../utils/Utils";
+import {Utils} from "../utilities/Utils";
 import {disableSpinner} from "../index";
+import {Alert} from "../enums/Alert.enum";
 
 export class AuthModLogic {
     private _authModule: AuthorativeModule = null;
+    private _utils: Utils = null;
 
     constructor(component: AuthorativeModule, payload: object) {
         const creatembutton = document.getElementById("creatembutton") as HTMLInputElement;
@@ -24,6 +25,7 @@ export class AuthModLogic {
         });
 
         this._authModule = component;
+        this._utils = new Utils();
         disableSpinner();
     }
 
@@ -74,37 +76,35 @@ export class AuthModLogic {
                 timetable: fp.selectedDates
             };
             if(await createModule(module)) {
+                this._utils.generateAlert("Module created successfully.", Alert.Success);
                 this._authModule.dashboardModule();
+            } else {
+                this._utils.generateAlert("", Alert.Danger);
             }
         });
     }
 
     submitButton(utils: Utils, modules: object[], action: ModuleAction, component: AuthorativeModule) {
-        // utils: Utils, modules: object[], action?: ModuleAction, component?: AuthorativeModule
+        // utilities: Utils, modules: object[], action?: ModuleAction, component?: AuthorativeModule
         const submitbuttom = document.getElementById("smsubmitbutton");
         submitbuttom.addEventListener("click", () => {
-            console.log("here " + utils.selectedModule);
             let module: object = null;
             for(let i = 0; i < modules.length; i++) {
                 const moduleData = modules[i];
-                console.log(moduleData);
                 if(moduleData["name"] === utils.selectedModule) {
                     module = moduleData;
-                    console.log("set module " + moduleData["name"]);
                     break;
                 }
             }
 
             if(module === null) {
-                console.error("No module selected");
+                this._utils.generateAlert("No module is selected to continue.", Alert.Warning);
             } else {
                 switch (action) {
                     case ModuleAction.Modify:
-                        console.log(module);
                         component.editModule(module);
                         break;
                     case ModuleAction.Delete:
-                        console.log(module);
                         component.deleteModule(module);
                         break;
                 }
@@ -114,7 +114,6 @@ export class AuthModLogic {
 
     editModule(fp: any, module: object) {
         const nameinput = document.getElementById("mnnameinput") as HTMLInputElement;
-        console.log(module);
         nameinput.value = module["name"];
         const ulname = document.getElementById("mnulname");
         ulname.innerHTML = "";
@@ -149,13 +148,16 @@ export class AuthModLogic {
                 timetable: fp.selectedDates
             };
             if(await verifyUserExists(newModule["leader"])) {
-                try{
+                try {
                     await updateModule(module["name"], newModule);
+                } catch {
+                    this._utils.generateAlert("", Alert.Danger);
                 } finally {
+                    this._utils.generateAlert("Module modifications successful.", Alert.Success);
                     this._authModule.dashboardModule();
                 }
             } else {
-                console.error("Leader username entered does not exist")
+                this._utils.generateAlert("Leader username entered does not exist.", Alert.Warning);
             }
 
         });
@@ -177,7 +179,10 @@ export class AuthModLogic {
         const deleteButton = document.getElementById("dbutton");
         deleteButton.addEventListener("click", async () => {
             if(await deleteModule(module["name"])) {
+                this._utils.generateAlert("Module successfully deleted.", Alert.Success);
                 this._authModule.dashboardModule();
+            } else {
+                this._utils.generateAlert("", Alert.Danger);
             }
         });
     }

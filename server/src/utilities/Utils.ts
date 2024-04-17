@@ -30,4 +30,46 @@ export class Utils {
             console.log(`Server: Cleaned up ${deleted} expired tokens`);
         }, 30*60000);
     }
+
+    sendResponse(response: object, errResponse: string, succResponse: string, altResponse?: string) {
+        const result: object = response["result"];
+        const status: boolean = response["status"];
+        if(typeof altResponse !== "undefined") {
+            return this.responseObj(result, altResponse, status);
+        }
+
+        if(status) {
+            return this.responseObj(result, succResponse, status);
+        } else {
+            return this.responseObj(result, errResponse, status);
+        }
+    }
+
+    sendMessageResponse(response: object, errResponse: string, succResponse: string, altResponse?: string) {
+        const status: boolean = response["status"];
+        if(typeof altResponse !== "undefined") {
+            return this.msgResponseObj(altResponse, status);
+        }
+
+        if(status) {
+            return this.msgResponseObj(succResponse, status);
+        } else {
+            return this.msgResponseObj(errResponse, status);
+        }
+    }
+
+    private msgResponseObj(message: string, status: boolean): object {
+        return {
+            message: message,
+            status: status
+        }
+    }
+
+    private responseObj(result: object, message: string, status: boolean): object {
+        return {
+            result: result,
+            message: message,
+            status: status
+        }
+    }
 }

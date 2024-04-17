@@ -7,30 +7,38 @@
 </head>
 <body>
     <div id="input-background-container">
-        <div class="h-100 d-flex align-items-center justify-content-center">
-            <div id="login-container">
-                <div class="d-flex">
-                    <div class="flex-fill">
-                        <img src="img/shu_logo.png" class="img-fluid" alt="shu logo">
+        <div class="container" id="fixed-center">
+            <div class="row text-center" id="login-container">
+                <div class="col-sm-6 d-none d-sm-block col-md-6 p-5">
+                    <img src="img/shu_logo.png" class="img-fluid" alt="shu logo">
+                </div>
+                <div class="col-sm-12 col-md-6 p-5">
+                    <h1>Welcome Back</h1>
+                    <h3>Enter your university credentials to continue</h3>
+                    <br>
+                    <div class="form-floating">
+                        <input type="username" class="form-control" id="usernameInput" placeholder="username">
+                        <label for="usernameInput" class="bg-transparent">Email address</label>
                     </div>
-                    <div class="flex-fill text-center">
-                        <h1>Welcome Back</h1>
-                        <h3>Enter your university credentials to continue</h3>
-                        <br>
-                        <div class="form-floating">
-                            <input type="email" class="form-control" id="emailInput" placeholder="username@hallam.shu.ac.uk">
-                            <label for="emailInput" class="bg-transparent">Email address</label>
-                        </div>
-                        <br>
-                        <div class="form-floating">
-                            <input type="password" class="form-control" id="passwordInput" placeholder="username@hallam.shu.ac.uk">
-                            <label for="emailInput">Password</label>
-                        </div>
-                        <br>
-                        <button id="loginButton" type="button" class="btn btn-outline-light w-100">Login</button>
-                        <br><br>
-                        <button type="button" class="btn btn-outline-light w-100 chhButton">Contact Hallam Help</button>
+                    <br>
+                    <div class="form-floating">
+                        <input type="password" class="form-control" id="passwordInput" placeholder="password">
+                        <label for="passwordInput">Password</label>
                     </div>
+                    <br>
+                    <button id="loginButton" type="button" class="btn btn-outline-light w-100">Login</button>
+                    <br>
+                    <br>
+                    <button type="button" class="btn btn-outline-light w-100 chhButton">Contact Hallam Help</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row fixed-bottom">
+            <div class="col">
+                <div id="alertContainer">
+
                 </div>
             </div>
         </div>

@@ -5,12 +5,48 @@ import {AuthModLogic} from "../logic/AuthModLogic";
 import {AuthorativeModule} from "../components/modules/AuthModComponent";
 import {AttendanceComponent} from "../components/AttendanceComponent";
 import {AttendanceLogic} from "../logic/AttendanceLogic";
+import {Alert} from "../enums/Alert.enum";
 
 export class Utils {
     private _selectedModule: string = null;
 
     get selectedModule() {
         return this._selectedModule;
+    }
+
+    generateAlert(message: string, type: Alert) {
+        let localMessage: string = message;
+        const alert = document.createElement("div");
+        alert.classList.add("alert", "w-25");
+        alert.role = "alert";
+        const span = document.createElement("span");
+        const strong = document.createElement("strong");
+        switch (type) {
+            case Alert.Success:
+                alert.classList.add("alert-success");
+                span.textContent = "&#10003;"
+                strong.textContent = " Success!"
+                break;
+            case Alert.Warning:
+                alert.classList.add("alert-warning");
+                span.textContent = "&#10003;"
+                strong.textContent = " Warning!"
+                break;
+            case Alert.Danger:
+                alert.classList.add("alert-danger");
+                span.textContent = "&#9888;";
+                strong.textContent = " Alert!"
+                localMessage = "An error errored, contact a system administrator.";
+                break;
+        }
+        alert.appendChild(span);
+        alert.appendChild(strong);
+        alert.textContent = localMessage;
+        const container = document.getElementById("alertContainer");
+        container.appendChild(alert);
+        window.setTimeout(() => {
+            container.removeChild(alert);
+        }, 5000);
     }
 
     selectListGroupItemString(htmlElement: HTMLElement, comparativeVariable: string): string {
