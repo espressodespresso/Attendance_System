@@ -3,6 +3,7 @@ import {AuthModLogic} from "../../logic/AuthModLogic";
 import {ModuleAction} from "../../enums/ModuleAction.enum";
 import * as timers from "timers";
 import {Utils} from "../../utils/Utils";
+import {disableSpinner} from "../../index";
 
 export class AuthorativeModule {
 

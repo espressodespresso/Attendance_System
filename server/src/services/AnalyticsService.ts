@@ -3,12 +3,115 @@ import {ChartData} from "chart.js";
 import {Collection} from "../enums/Collection.enum";
 import {Errors} from "../utilities/Errors";
 import {Logs} from "../utilities/Logs";
+import {Role} from "../enums/Role.enum";
+import {ModuleService} from "./ModuleService";
 
 export class AnalyticsService {
     private _mongoService: MongoService = null;
+    private _moduleService: ModuleService = null;
 
     constructor() {
         this._mongoService = new MongoService();
+        this._moduleService = new ModuleService();
+    }
+
+    async getIndexTableData(userInfo: object): Promise<object> {
+        const role: Role = userInfo["role"];
+        const headStrings: string[] = ["Module Name", "Date", "Time"]
+        let allBodyStrings: string[][] = null;
+        switch (role) {
+            case Role.Student:
+            case Role.Lecturer:
+                allBodyStrings = await this.getIndexData(userInfo["module_list"]);
+                break;
+            case Role.AdministrativeFM:
+            case Role.IT:
+                const modules: object[] = await this._moduleService.loadModules();
+                allBodyStrings = await this.getIndexData(userInfo["module_list"], modules);
+                break;
+        }
+
+        return {
+            headStrings: headStrings,
+            bodyStrings: allBodyStrings
+        };
+    }
+
+    private async getIndexData(module_list: string[], modules?: object[]): Promise<string[][]> {
+        const allBodyStrings: string[][] = [];
+        let list = [];
+        if(typeof modules !== "undefined") {
+            list = modules;
+        } else {
+            list = module_list;
+        }
+
+        for(let i = 0; i < list.length; i++) {
+            let moduleName: string = null;
+            let module: object = null;
+            if(typeof modules !== "undefined") {
+                module = list[i];
+                moduleName = module["name"];
+            } else {
+                moduleName = list[i];
+                module = await this._moduleService.loadModule(moduleName);
+            }
+            const timetable: Date[] = module["timetable"];
+            if(allBodyStrings.length === 6) {
+                break;
+            }
+            for(let i = 0; i < timetable.length; i++) {
+                const date: Date = new Date(timetable[i]);
+                if(allBodyStrings.length === 6) {
+                    break;
+                }
+
+                if(date > new Date()) {
+                    const bodyStrings: string[] = [];
+                    bodyStrings.push(moduleName);
+                    bodyStrings.push(date.toDateString())
+                    bodyStrings.push(date.getTime().toString());
+                    allBodyStrings.push(bodyStrings);
+                }
+            }
+        }
+
+        const dates: Date[] = [];
+        allBodyStrings.map(bodyStrings => {
+            const date: Date = new Date(bodyStrings[1]);
+            date.setTime(parseInt(bodyStrings[2]));
+            dates.push(date);
+        })
+
+        dates.sort(function (a, b) {
+            if(a < b) {
+                return -1;
+            } else if( a == b) {
+                return 0;
+            } else {
+                return 1;
+            }
+        })
+
+        const sortedBodyStrings: string[][] = [];
+        for(let i = 0; i < allBodyStrings.length; i++) {
+            const date: Date = dates[i];
+            for(let x = 0; x < allBodyStrings.length; x++) {
+                const bodyString: string[] = allBodyStrings[x];
+                const tempDate: Date = new Date(bodyString[1]);
+                tempDate.setTime(parseInt(bodyString[2]));
+                if(new Date(date).toString() === tempDate.toString()) {
+                    const newBodyString: string[] = [];
+                    bodyString.map((string, y) => {
+                        newBodyString.push(string);
+                    })
+                    sortedBodyStrings.push(newBodyString);
+                    break;
+                }
+            }
+        }
+
+        return sortedBodyStrings;
     }
 
     async getUserTableData(username: string, module_name: string): Promise<object> {

@@ -4,6 +4,7 @@ import {AuthorativeModule} from "../components/modules/AuthModComponent";
 import {ModuleAction} from "../enums/ModuleAction.enum";
 import {Role} from "../enums/Role.enum";
 import {Utils} from "../utils/Utils";
+import {disableSpinner} from "../index";
 
 export class AuthModLogic {
     private _authModule: AuthorativeModule = null;
@@ -23,6 +24,7 @@ export class AuthModLogic {
         });
 
         this._authModule = component;
+        disableSpinner();
     }
 
     private async enrollUsers(users: string[]) {

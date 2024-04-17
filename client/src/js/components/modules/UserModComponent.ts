@@ -1,3 +1,5 @@
+import {disableSpinner} from "../../index";
+
 export class UserModComponent {
     constructor() {
         const mod_container = document.getElementById("modules-container");
@@ -5,6 +7,7 @@ export class UserModComponent {
         row.classList.add("row");
         this.initListGroups(row);
         mod_container.appendChild(row);
+        disableSpinner();
     }
 
     private initListGroups(row: HTMLDivElement) {

@@ -1,5 +1,6 @@
 import {Utils} from "../utils/Utils";
 import {AnalyticsLogic} from "../logic/AnalyticsLogic";
+import {disableSpinner} from "../index";
 
 export class AnalyticsComponent {
     private _utils: Utils = null;

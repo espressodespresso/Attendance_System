@@ -13,8 +13,11 @@ const dotenvExpand = require('dotenv-expand');
 const myEnv = dotenv.config({ processEnv: {} });
 dotenvExpand.expand(myEnv);
 
-const app = new Hono()
-new Utils();
+(async () => {
+    await new Utils().checkRefreshTokens();
+})()
+
+const app = new Hono();
 
 
 app.use('/login', cors({

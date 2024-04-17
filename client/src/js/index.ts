@@ -8,6 +8,14 @@ import {AnalyticsComponent} from "./components/AnalyticsComponent";
 
 const fpPromise = FingerprintJS.load();
 
+export function disableSpinner() {
+    const spinner = document.getElementById("spinner");
+    spinner.classList.add("spinner-hidden");
+    spinner.addEventListener("transitionend", () => {
+        document.body.removeChild(spinner)
+    });
+}
+
 async function loadItems() {
     const payload = await verifyPayload();
     switch (window.location.pathname) {
@@ -20,12 +28,10 @@ async function loadItems() {
         case "/attendance_system/client/src/analytics.html":
             new AnalyticsComponent(payload);
             break;
+        case "/attendance_system/client/src/login.html":
+            disableSpinner();
+            break;
     }
-    const spinner = document.getElementById("spinner");
-    spinner.classList.add("spinner-hidden");
-    spinner.addEventListener("transitionend", () => {
-        spinner.parentNode.removeChild(spinner);
-    });
 }
 
 async function verifyPayload(): Promise<object> {

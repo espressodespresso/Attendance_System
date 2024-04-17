@@ -10,11 +10,8 @@ import {
     getUserTableData
 } from "../services/AnalyticsService";
 import {Role} from "../enums/Role.enum";
-
-enum Type {
-    Line,
-    Bar
-}
+import {ChartType} from "../enums/ChartType.enum";
+import {disableSpinner} from "../index";
 
 export class AnalyticsLogic {
     private _utils: Utils = null;
@@ -50,7 +47,7 @@ export class AnalyticsLogic {
                 });
                 const attendanceButton = component.addControlbutton("Display Attendance Rate", "graphbutton");
                 attendanceButton.addEventListener('click', async () => {
-                    await this.initAttendanceRateGraph();
+                    await this.initAttendanceRateGraph(this._component.container);
                 });
                 this._controlButtons.push(attendanceButton);
                 break;
@@ -63,16 +60,17 @@ export class AnalyticsLogic {
                 });
                 const attendanceButton  = component.addControlbutton("Display Current Attendance Rate", "bargraphbutton");
                 attendanceButton.addEventListener('click', async () => {
-                    await this.initModuleAttendanceRateGraph();
+                    await this.initModuleAttendanceRateGraph(this._component.container);
                 });
                 this._controlButtons.push(attendanceButton);
                 const attendanceAvgButton  = component.addControlbutton("Display Average Attendance Rate", "linegraphbutton");
                 attendanceAvgButton.addEventListener('click', async () => {
-                    await this.initModuleAverageAttendanceRateGraph();
+                    await this.initModuleAverageAttendanceRateGraph(this._component.container);
                 });
                 this._controlButtons.push(attendanceAvgButton);
                 break;
         }
+        disableSpinner();
     }
 
     private getUserInfo(): object {
@@ -102,7 +100,7 @@ export class AnalyticsLogic {
                 for(let i = 0; i < this._controlButtons.length; i++) {
                     this._controlButtons[i].disabled = false;
                 }
-                await this.initModuleAttendanceRateGraph();
+                await this.initModuleAttendanceRateGraph(this._component.container);
             }
         });
     }
@@ -152,20 +150,20 @@ export class AnalyticsLogic {
         });
     }
 
-    private async initModuleAverageAttendanceRateGraph() {
+    private async initModuleAverageAttendanceRateGraph(container: HTMLElement) {
         const response: object = JSON.parse(await getModuleAverageAttendanceRateData(this._selectedModule["name"]));
-        await this.initGraph("moduleAvgAttendanceRateChart", Type.Line, response["data"], false);
+        await this.initGraph("moduleAvgAttendanceRateChart", ChartType.Line, response["data"], container);
     }
 
-    private async initModuleAttendanceRateGraph() {
+    private async initModuleAttendanceRateGraph(container: HTMLElement) {
         const response: object = JSON.parse(await getModuleAttendanceRateData(this._selectedModule["name"]));
-        await this.initGraph("userAttendanceRateChart", Type.Bar, response["graph"], false, true, response);
+        await this.initGraph("userAttendanceRateChart", ChartType.Bar, response["graph"], container, true, response);
     }
 
-    private async initAttendanceRateGraph() {
+    private async initAttendanceRateGraph(container: HTMLElement) {
         const response: object = JSON.parse(await getUserAttendanceRateData
         (this.getUserInfo()["username"] ,this._selectedModule["name"]));
-        await this.initGraph("attendanceRateChart", Type.Line, response["data"], false);
+        await this.initGraph("attendanceRateChart", ChartType.Line, response["data"], container);
     }
 
     private async initAttendanceRateGraphwData(chartElements: ActiveElement[], response: object, chart: Chart) {
@@ -184,21 +182,19 @@ export class AnalyticsLogic {
             }]
         };
 
-        await this.initGraph("attendanceRateChart", Type.Line, chartData, false);
+        await this.initGraph("attendanceRateChart", ChartType.Line, chartData, this._component.container);
     }
 
-    private async initGraph(id: string, type: Type, data: ChartData, replace: boolean
-                            , wData?: boolean, response?: object) {
+    private async initGraph(id: string, type: ChartType, data: ChartData, container: HTMLElement, wData?: boolean, response?: object) {
         this._component.displayGraph();
-        const container = this._component.container;
         const chart = document.createElement("canvas");
         chart.id = id;
         let typeDef = null;
         switch (type) {
-            case Type.Bar:
+            case ChartType.Bar:
                 typeDef = "bar";
                 break;
-            case Type.Line:
+            case ChartType.Line:
                 typeDef = "line";
                 break;
         }
@@ -234,10 +230,6 @@ export class AnalyticsLogic {
                     }
                 }
             })
-        }
-
-        if(replace) {
-            container.removeChild(document.getElementById("userAttendanceRateChart"));
         }
 
         container.appendChild(chart);

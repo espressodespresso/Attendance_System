@@ -29,3 +29,8 @@ export async function getModuleTableData(module_name: string) {
     const data: object = await requestService.handleFetch(Fetch.GET, Route.analytics, `/table/${module_name}`, Accept.JSON);
     return data["json"];
 }
+
+export async function getIndexTableData() {
+    const data: object = await requestService.handleFetch(Fetch.GET, Route.analytics, `/indextable`, Accept.JSON);
+    return data["json"];
+}

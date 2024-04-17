@@ -6,10 +6,7 @@ export class Utils {
     private mongoService: MongoService = null;
 
     constructor() {
-        this.mongoService = new MongoService;
-        (async () => {
-            await this.checkRefreshTokens();
-        })();
+        this.mongoService = new MongoService();
     }
 
     async checkRefreshTokens() {
