@@ -14,6 +14,69 @@ export class ModuleService {
 
     }
 
+    async listModules(userInfo: object) {
+        const module_list: string[] = userInfo["module_list"];
+        if(module_list.length === 0) {
+            return null;
+        } else {
+            let modules: object[] = [];
+            for(let i = 0; i < module_list.length; i++) {
+                const moduleObj = await this.loadModule(module_list[i]);
+                const timetable: Date[] = moduleObj["timetable"];
+                const firstDate: Date = new Date(timetable[0]);
+                const dateMonth = firstDate.getMonth()+1;
+                const dateYear = firstDate.getFullYear();
+                const dateYearString = dateYear.toString();
+                let moduleYear: string = "";
+                let semester: string = "";
+                if(dateMonth >= 9) {
+                    semester = "Semester 1";
+                    moduleYear = `${dateYearString[2]}${dateYearString[3]} / ${dateYearString[2]}${parseInt(dateYearString[3])+1}`
+                } else {
+                    moduleYear = `${dateYearString[2]}${parseInt(dateYearString[3])-1} / ${dateYearString[2]}${dateYearString[3]}`
+                    if(dateMonth <= 5) {
+                        semester = "Semester 2";
+                    } else {
+                        semester = "Semester 3";
+                    }
+                }
+
+                const leaderInfo = await this._accountService.getUserInfobyUsername(moduleObj["leader"]);
+                const data = {
+                    name: moduleObj["name"],
+                    semester: semester,
+                    mandatory: "true",
+                    lecturer: `${leaderInfo["first_name"]}, ${leaderInfo["last_name"][0]} | ${leaderInfo["username"]}@hallam.shu.ac.uk`,
+                }
+
+                if(modules.length === 0) {
+                    modules.push({
+                        name: moduleYear,
+                        modules: [data]
+                    })
+                } else {
+                    let notFound: boolean = true;
+                    for(let i = 0; i < modules.length; i++) {
+                        const obj: object = modules[i];
+                        if(obj["name"] === moduleYear) {
+                            (obj["modules"] as object[]).push(data);
+                            notFound = false;
+                        }
+                    }
+
+                    if(notFound) {
+                        modules.push({
+                            name: moduleYear,
+                            modules: [data]
+                        })
+                    }
+                }
+            }
+
+            return modules;
+        }
+    }
+
     async updateUsersModuleName(oldName: string, newName: string) {
         const moduleData: object = await this.loadModule(newName)
         const enrolled: string[] = moduleData["enrolled"];

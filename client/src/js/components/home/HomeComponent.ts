@@ -55,28 +55,25 @@ export class HomeComponent {
     }
 
     private userFeatures() {
-        this._side_container_title.textContent = "Welcome Back";
-        this._side_container_title_sub.textContent = "Let's catch up on what's been happening this week";
-        this._side_container_tab1_title.textContent = "Attendance Trend"
-        this._side_container_tab2_title.textContent = "Upcoming Lessons"
-        this._side_container_tab3_title.textContent = "University Announcements";
-
+        this.initContent();
         this._attendanceComponent.userAttendanceComponent();
         this.initLessonsTable();
     }
 
     private authFeatures(payload: object) {
+        this.initContent();
+        (async () => {
+            await this._attendanceComponent.authAttendanceSelectComponent(payload);
+        })();
+        this.initLessonsTable();
+    }
+
+    private initContent() {
         this._side_container_title.textContent = "Welcome Back"
         this._side_container_title_sub.textContent = "Let's catch up on what's been happening";
         this._side_container_tab1_title.textContent = "Attendance Trend"
         this._side_container_tab2_title.textContent = "Upcoming Lessons"
         this._side_container_tab3_title.textContent = "University Announcements";
-
-        (async () => {
-            await this._attendanceComponent.authAttendanceSelectComponent(payload);
-        })();
-
-        this.initLessonsTable();
     }
 
     private initLessonsTable() {

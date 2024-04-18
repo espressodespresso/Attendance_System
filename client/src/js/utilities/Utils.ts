@@ -90,7 +90,7 @@ export class Utils {
         container.appendChild(title);
         this.addBreakpoint(container);
         const ul = document.createElement("ul");
-        ul.classList.add("list-group", "w-75", "m-auto");
+        ul.classList.add("list-group", "w-75", "m-auto", "select-module-restriction");
         ul.id = "selmodul";
         const li = document.createElement("li");
         li.classList.add("list-group-item");

@@ -13,10 +13,6 @@ const dotenvExpand = require('dotenv-expand');
 const myEnv = dotenv.config({ processEnv: {} });
 dotenvExpand.expand(myEnv);
 
-(async () => {
-    await new Utils().checkRefreshTokens();
-})()
-
 const app = new Hono();
 
 

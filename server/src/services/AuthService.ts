@@ -5,6 +5,7 @@ import {decode} from 'hono/jwt'
 import {MongoService} from "./MongoService";
 import {Collection} from "../enums/Collection.enum";
 import {AuthState} from "../enums/AuthState.enum";
+import {Utils} from "../utilities/Utils";
 
 export interface RoleAuth {
     authorised: Role[]
@@ -27,6 +28,8 @@ export class AuthService {
             const query = { username: username };
             return await this._mongoService.findOne(query, Collection.users);
         });
+        // Clears refresh tokens
+        await new Utils().checkRefreshTokens();
 
         let obj = {
             authstate: undefined,

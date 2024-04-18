@@ -101,7 +101,16 @@ export class AnalyticsLogic {
                 for(let i = 0; i < this._controlButtons.length; i++) {
                     this._controlButtons[i].disabled = false;
                 }
-                await this.initModuleAttendanceRateGraph(this._component.container);
+                switch ((this.getUserInfo()["role"] as Role)) {
+                    case Role.Student:
+                        await this.initAttendanceRateGraph(this._component.container);
+                        break;
+                    case Role.Lecturer:
+                    case Role.AdministrativeFM:
+                    case Role.IT:
+                        await this.initModuleAttendanceRateGraph(this._component.container);
+                        break;
+                }
             } else {
                 this._utils.generateAlert("", Alert.Danger);
             }

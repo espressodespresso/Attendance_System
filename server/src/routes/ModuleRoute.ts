@@ -11,6 +11,20 @@ const moduleService = new ModuleService();
 const routeService = new RouteService();
 export const moduleRoute = new Hono();
 
+moduleRoute.get('/userlist', async (c) => {
+    return await routeService.handleErrors(c, {authorised: [Role.Student]}, async (): Promise<Response> => {
+        const token: string = routeService.getAuthToken(c);
+        if(token === null) {
+            console.error(Errors.NoAuthToken)
+            c.status(401);
+            return c.text(Errors.NoAuthToken);
+        }
+
+        const userInfo = await new AccountService().getUserInfobyAuthToken(token);
+        return c.json({ data: await moduleService.listModules(userInfo) });
+    })
+})
+
 moduleRoute.post('/create', async (c) => {
    return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
        const body: JSON = await routeService.getBody(c);

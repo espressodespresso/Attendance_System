@@ -54,7 +54,7 @@ analyticsRoute.get('/attendance/avg/:module/data', async (c) => {
 });
 
 analyticsRoute.get('/table/:user/:module', async (c) => {
-    return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
+    return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
         const response: object = await analyticsService.getUserTableData(routeService.getParam(c, 'user')
             ,routeService.getParam(c, 'module'));
         if(response === null) {

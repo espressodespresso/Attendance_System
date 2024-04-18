@@ -6,6 +6,23 @@
     height: 100vh;
 }
 
+.select-module-restriction {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.user-modules {
+    border-radius: 12px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(6.4px);
+    -webkit-backdrop-filter: blur(6.4px);
+    border: 1px solid rgba(180, 180, 180, 0.8);
+}
+
+#top-listgroup {
+    font-weight: bold;
+}
+
 #fixed-center {
     position: absolute;
     top: 50%;
