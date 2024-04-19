@@ -46,10 +46,10 @@ attendanceRoute.post('/attend/:code', async (c) => {
             routeService.getParam(c, 'code'), username);
         if(!response["status"]) {
             c.status(400);
-            return c.json(JSON.stringify(response["message"]));
+            return c.json(JSON.stringify(response));
         }
 
-        return c.json(JSON.stringify(response["message"]));
+        return c.json(JSON.stringify(response));
     });
 });
 

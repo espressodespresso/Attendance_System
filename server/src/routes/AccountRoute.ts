@@ -79,7 +79,37 @@ accountRoute.get('/verify/:username', async (c) => {
         }
 
         return c.json({ valid: false })
-    })
+    });
+});
+
+accountRoute.delete('/logout', async (c) => {
+   return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
+       const token: string = routeService.getAuthToken(c);
+       if(token === null) {
+           console.error(Errors.NoAuthToken)
+           c.status(401);
+           return c.text(Errors.NoAuthToken);
+       }
+
+       let refresh_token: string = routeService.getRefreshToken(c);
+       if(refresh_token === null) {
+           console.error(Errors.NoRefreshToken);
+           c.status(401);
+           return c.text(Errors.NoRefreshToken);
+       }
+
+       const userInfo = await accountService.getUserInfobyAuthToken(token);
+       if(await accountService.deleteTokensLogout(userInfo["username"])) {
+           routeService.logoutToken(c, token, refresh_token);
+           console.log(Logs.AccountLogout);
+           c.status(200);
+           return c.text(Logs.AccountLogout);
+       } else {
+           c.status(400);
+           console.log(Errors.APIError);
+           return c.text(Errors.APIError);
+       }
+   });
 });
 
 /*accountRoute.get('/update/:username', async (c) => {

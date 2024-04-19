@@ -3,7 +3,7 @@ import {Fetch} from "../enums/Fetch.enum";
 import {Route} from "../enums/Route.enum";
 
 export class RequestService {
-    private apiAddress: string = "http://localhost:8080/";
+    private apiAddress: string = "https://localhost:443/";
 
     async handleFetch(fetch: Fetch, route: Route, url: string, accept?: Accept, body?: string): Promise<object> {
         let tempRoute: string = null;

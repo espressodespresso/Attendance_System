@@ -1,3 +1,5 @@
+import {NavbarLogic} from "../logic/NavbarLogic";
+
 export function insert() {
     // Navbar Container
     const navbar = document.createElement("nav");
@@ -23,6 +25,19 @@ export function insert() {
     // Navbar
     const ulNav = document.createElement("ul");
     ulNav.classList.add("navbar-nav", "mb2", "mb-lg-0");
+    // Logout Navbar Item ("brand")
+    const logout_item = document.createElement("a");
+    logout_item.classList.add("navbar-brand");
+    logout_item.href = "#";
+    logout_item.id = "logout_button";
+    const logout_img = document.createElement("img");
+    logout_img.src = "img/logout.png";
+    logout_img.alt = "Logout Icon";
+    logout_img.width = 24;
+    logout_img.height = 24;
+    logout_img.classList.add("d-inline-block", "align-text-top");
+    logout_item.appendChild(logout_img);
+    ulNav.appendChild(logout_item);
     // Modules Navbar Item
     const modulesItem = document.createElement('li');
     modulesItem.classList.add("nav-item");
@@ -53,4 +68,5 @@ export function insert() {
     container_fluid.appendChild(ulNav);
     navbar.appendChild(container_fluid);
     document.body.insertBefore(navbar, document.body.firstChild);
+    new NavbarLogic();
 }

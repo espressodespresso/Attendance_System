@@ -4,8 +4,7 @@ import {AttendanceComponent} from "../components/AttendanceComponent";
 import {Utils} from "../utilities/Utils";
 import QRCode from 'qrcode'
 import {Alert} from "../enums/Alert.enum";
-
-const QrScanner = require('qr-scanner');
+import {Html5Qrcode} from "html5-qrcode";
 
 export class AttendanceLogic {
     private _attendanceComponent: AttendanceComponent = null;
@@ -28,11 +27,26 @@ export class AttendanceLogic {
             console.log(e);
         }
 
-        window.addEventListener('beforeunload', async function (e) {
-            e.preventDefault();
-            console.log(await terminateAttendanceCode(code))
-            e.returnValue = null;
-        })
+        const terminate = document.getElementById("terminatebutton");
+        terminate.addEventListener('click', async () => {
+            const status = await terminateAttendanceCode(code);
+            if(status) {
+                this._utils.generateAlert("Code terminated successfully", Alert.Success);
+            } else {
+                this._utils.generateAlert("", Alert.Danger);
+            }
+            this._attendanceComponent.index_container_form.innerHTML = ""
+        });
+
+        window.addEventListener('beforeunload', async () => {
+            const utils = new Utils();
+            const status = await terminateAttendanceCode(code);
+            if(status) {
+                utils.generateAlert("Code terminated successfully", Alert.Success);
+            } else {
+                utils.generateAlert("", Alert.Danger);
+            }
+        });
     }
 
     attendanceUserCodeComponent() {
@@ -50,12 +64,65 @@ export class AttendanceLogic {
             }
         });
         const scanbutton: HTMLButtonElement = document.getElementById("scanqrcode") as HTMLButtonElement;
-        (async () => {
+        scanbutton.addEventListener("click", async () => {
+            let readCode: string = null;
+            const reader = document.createElement("div");
+            reader.id = "reader";
+            this._attendanceComponent.index_container_form.appendChild(reader);
+            try {
+                const cameras = await Html5Qrcode.getCameras();
+                if(cameras && cameras.length) {
+                    try {
+                        const html5QrCode = new Html5Qrcode("reader");
+                        await html5QrCode.start(cameras[0].id,
+                            {
+                                fps: 10,
+                                qrbox: { width: 250, height: 250 },
+                            },
+                            async (decodedText, decodedResult) => {
+                                if(readCode !== decodedText) {
+                                    readCode = decodedText;
+                                    const response = await attendActiveAttendance(parseInt(decodedText));
+                                    if(response["status"]) {
+                                        const data = JSON.parse(response["json"]);
+                                        const dataStatus = data["status"];
+                                        const dataMessage = data["message"];
+                                        if(dataStatus) {
+                                            this._utils.generateAlert(dataMessage, Alert.Success);
+                                        } else {
+                                            this._utils.generateAlert(dataMessage, Alert.Warning);
+                                        }
+                                    } else {
+                                        this._utils.generateAlert("", Alert.Danger);
+                                    }
+                                }
+                                await html5QrCode.stop();
+                            },
+                            (errorMessage) => {
+                                // parse error, ignore it.
+                            });
+                    } catch (e) {
+                        scanbutton.disabled = true;
+                        this._utils.generateAlert("Scanner failed to start", Alert.Warning);
+                        console.error(e);
+                    }
+                } else {
+                    scanbutton.disabled = true;
+                    this._utils.generateAlert("Device has no available cameras to hook", Alert.Warning);
+                }
+            } catch (e) {
+                scanbutton.disabled = true;
+                this._utils.generateAlert("", Alert.Danger);
+                console.error(e);
+            }
+        })
+
+        /*(async () => {
             if(!await QrScanner.hasCamera()) {
                 scanbutton.disabled = true;
             }
-        })();
-        scanbutton.addEventListener('click', async () => {
+        })();*/
+        /*scanbutton.addEventListener('click', async () => {
             const video = document.createElement("video");
             video.height = 180;
             video.width = 320;
@@ -73,7 +140,7 @@ export class AttendanceLogic {
                 }
             );
             await qrScanner.start();
-        })
+        })*/
     }
 
     submitModuleButton(utils: Utils) {
@@ -114,7 +181,8 @@ export class AttendanceLogic {
             ul.appendChild(listgroupitem);
         }
 
-        const submitButton = document.getElementById("smsubmitbutton");
+        let submitButton = (document.getElementById("smsubmitbutton") as HTMLButtonElement);
+        submitButton = this._utils.reInitSubmitButton(submitButton);
         submitButton.textContent = "Select Date";
         submitButton.addEventListener("click", async () => {
             if(this._selectedDate !== null) {

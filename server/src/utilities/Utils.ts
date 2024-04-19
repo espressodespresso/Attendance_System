@@ -10,25 +10,23 @@ export class Utils {
     }
 
     async checkRefreshTokens() {
-        setInterval(async () => {
-            let deleted: number = 0;
-            const response = await this.mongoService.findall(Collection.token);
-            if(response["status"]) {
-                const tokens: object[] = response["result"];
-                for(let i = 0; i < tokens.length; i++) {
-                    const tokenObj: object = tokens[i];
-                    const expiry: Date = tokenObj["expiry"];
-                    if(new Date(expiry) < new Date()) {
-                        const query = { "refresh_token": tokenObj["refresh_token"] };
-                        const innerResponse: object = await this.mongoService.deleteOne(query, Collection.token);
-                        if(innerResponse["status"]) {
-                            deleted++;
-                        }
+        let deleted: number = 0;
+        const response = await this.mongoService.findall(Collection.token);
+        if(response["status"]) {
+            const tokens: object[] = response["result"];
+            for(let i = 0; i < tokens.length; i++) {
+                const tokenObj: object = tokens[i];
+                const expiry: Date = tokenObj["expiry"];
+                if(new Date(expiry) < new Date()) {
+                    const query = { "refresh_token": tokenObj["refresh_token"] };
+                    const innerResponse: object = await this.mongoService.deleteOne(query, Collection.token);
+                    if(innerResponse["status"]) {
+                        deleted++;
                     }
                 }
             }
-            console.log(`Server: Cleaned up ${deleted} expired tokens`);
-        }, 30*60000);
+        }
+        console.log(`Server: Cleaned up ${deleted} expired tokens`);
     }
 
     sendResponse(response: object, errResponse: string, succResponse: string, altResponse?: string) {

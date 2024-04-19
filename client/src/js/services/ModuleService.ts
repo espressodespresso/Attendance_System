@@ -46,7 +46,7 @@ export async function deleteModule(moduleName: string): Promise<boolean> {
     return data["success"];
 }
 
-export async function userList(): Promise<object[]> {
+export async function moduleList(): Promise<object[]> {
     const data: object = await requestService.handleFetch(Fetch.GET, Route.module, "/userlist", Accept.JSON);
     return data["json"]["data"];
 }

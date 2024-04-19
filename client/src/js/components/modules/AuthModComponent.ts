@@ -75,7 +75,7 @@ export class AuthorativeModule {
         this.dashboardModule();
     }
 
-    private getModuleForm(): HTMLElement {
+    getModuleForm(): HTMLElement {
         const module_Form = document.getElementById("module-form");
         document.getElementById("module-form").innerHTML = "";
         return module_Form;
@@ -229,11 +229,6 @@ export class AuthorativeModule {
     }
 
     dashboardModule() {
-        const module_Form = this.getModuleForm();
-        const title = document.createElement("h2");
-        title.textContent = "Dashboard";
-        module_Form.appendChild(title);
-
         this._authModLogic.dashboardModule();
     }
 }

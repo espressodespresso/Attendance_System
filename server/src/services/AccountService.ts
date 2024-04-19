@@ -144,10 +144,17 @@ export class AccountService {
             return await this._mongoService.deleteMany(query, Collection.token);
         });
 
-        if(response["status"]) {
+        const status = response["status"];
+        if(status) {
             console.log(Logs.TokenDeletion);
         } else {
             console.error(Errors.TokenDeletion);
         }
+
+        return status;
+    }
+
+    async deleteTokensLogout(username: string) {
+        return await this.deleteRefreshToken(username);
     }
 }

@@ -1,4 +1,11 @@
 @import url("../node_modules/bootstrap/dist/css/bootstrap.min.css");
+
+#reader {
+    width: 640px;
+    height: 480px;
+    text-align: center;
+}
+
 #input-background-container{
     background: linear-gradient(45deg, #4720b3, #575656, #b6014c, #7a003a);
     background-size: 300% 300%;
@@ -32,13 +39,23 @@
 
 #login-container{
     /* With assistance from https://css.glass */
-    background: rgba(180, 180, 180, 0.5);
-    border-radius: 12px;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(6.4px);
     -webkit-backdrop-filter: blur(6.4px);
-    border: 1px solid rgba(180, 180, 180, 0.8);
+}
 
+#login-container-left-column {
+    border: 1px solid rgba(180, 180, 180, 0.8);
+    background: rgba(255,240,251, 0.5);
+    border-bottom-left-radius: 12px;
+    border-top-left-radius: 12px;
+}
+
+#login-container-right-column {
+    border: 1px solid rgba(180, 180, 180, 0.8);
+    background: rgba(180, 180, 180, 0.5);
+    border-bottom-right-radius: 12px;
+    border-top-right-radius: 12px;
 }
 
 #login-container img {

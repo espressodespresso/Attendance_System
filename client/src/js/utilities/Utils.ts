@@ -1,5 +1,5 @@
 import {Role} from "../enums/Role.enum";
-import {loadModule, loadModules} from "../services/ModuleService";
+import {loadModule, loadModules, moduleList} from "../services/ModuleService";
 import {ModuleAction} from "../enums/ModuleAction.enum";
 import {AuthModLogic} from "../logic/AuthModLogic";
 import {AuthorativeModule} from "../components/modules/AuthModComponent";
@@ -12,6 +12,26 @@ export class Utils {
 
     get selectedModule() {
         return this._selectedModule;
+    }
+
+    generateLocalSpinner(container: HTMLElement) {
+        const center = document.createElement("div");
+        center.classList.add("text-center");
+        center.id = "local_spinner";
+        const spinner = document.createElement("div");
+        spinner.classList.add("spinner-border");
+        spinner.role = "status";
+        const span = document.createElement("span");
+        span.classList.add("visually-hidden");
+        span.innerHTML = "Loading...";
+        spinner.appendChild(span);
+        center.appendChild(spinner);
+        container.appendChild(center);
+    }
+
+    terminateLocalSpinner() {
+        const spinner = document.getElementById("local_spinner");
+        spinner.parentNode.removeChild(spinner);
     }
 
     generateAlert(message: string, type: Alert) {
@@ -98,11 +118,7 @@ export class Utils {
         ul.appendChild(li);
         container.appendChild(ul);
         this.addBreakpoint(container);
-        const selectmbutton = document.createElement("button");
-        selectmbutton.classList.add("btn", "btn-outline-dark", "w-75");
-        selectmbutton.type = "button";
-        selectmbutton.id = "smsubmitbutton";
-        selectmbutton.textContent = btn_title;
+        const selectmbutton = this.initSubmitButton(btn_title);
         container.appendChild(selectmbutton);
         this.addBreakpoint(container);
     }
@@ -148,5 +164,86 @@ export class Utils {
 
     private addBreakpoint(element: HTMLElement) {
         element.appendChild(document.createElement("br"));
+    }
+
+    private initSubmitButton(btn_title: string): HTMLButtonElement {
+        const selectmbutton = document.createElement("button");
+        selectmbutton.classList.add("btn", "btn-outline-dark", "w-75");
+        selectmbutton.type = "button";
+        selectmbutton.id = "smsubmitbutton";
+        selectmbutton.textContent = btn_title;
+        return selectmbutton;
+    }
+
+    reInitSubmitButton(button: HTMLButtonElement): HTMLButtonElement {
+        button.parentNode.replaceChild(this.initSubmitButton(button.textContent), button);
+        return (document.getElementById("smsubmitbutton") as HTMLButtonElement);
+    }
+
+    // Generate Module List Common Functions
+
+    async initModuleList(container: HTMLElement) {
+        const data: object[] = await moduleList();
+        if(data === null) {
+            this.noData(container);
+        } else {
+            for(let i = 0; i < data.length; i++) {
+                const obj = data[i];
+                this.initModuleYear(obj["modules"], `Modules ${obj["name"]}`, container)
+            }
+        }
+    }
+
+    private initModuleYear(modules: object[], name: string, container: HTMLElement) {
+        const row = document.createElement("div");
+        row.classList.add("row", "p-3");
+        const col = document.createElement('col');
+        col.classList.add("col-12", "user-modules", "p-3");
+        const h2 = document.createElement("h2");
+        h2.textContent = name;
+        col.appendChild(h2);
+        col.appendChild(this.createUnorderedList({
+            name: "Module Name",
+            semester: "Semester",
+            mandatory: "Mandatory Attendance",
+            lecturer: "Lecturer Details"
+        }, true));
+        modules.map(obj => {
+            col.appendChild(this.createUnorderedList(obj));
+        })
+        row.appendChild(col);
+        container.appendChild(row);
+    }
+
+    private noData(container: HTMLElement) {
+        const row = document.createElement("div");
+        const col = document.createElement('col');
+        col.classList.add("col-12", "p-3");
+        const h2 = document.createElement("h2");
+        h2.textContent = "No Data";
+        col.appendChild(h2);
+        row.appendChild(col);
+        container.appendChild(row);
+    }
+
+    createUnorderedList(module_content: object, top?: boolean): HTMLUListElement {
+        const ul = document.createElement("ul");
+        ul.classList.add("list-group", "list-group-horizontal");
+        if(typeof top !== "undefined") {
+            ul.id = "top-listgroup";
+            ul.classList.add("list-group-item-dark");
+        }
+        ul.appendChild(this.createListitem(module_content["name"]));
+        ul.appendChild(this.createListitem(module_content["semester"]));
+        ul.appendChild(this.createListitem(module_content["mandatory"]));
+        ul.appendChild(this.createListitem(module_content["lecturer"]));
+        return ul;
+    }
+
+    private createListitem(textContent: string): HTMLLIElement {
+        const li = document.createElement("li");
+        li.classList.add("list-group-item", "w-25");
+        li.textContent = textContent;
+        return li;
     }
 }

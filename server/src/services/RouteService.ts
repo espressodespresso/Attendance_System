@@ -73,6 +73,21 @@ export class RouteService {
         await new AccountService().storeRefreshToken(token, username, fingerprint);
     }
 
+    logoutToken(c: any, token: string, refresh_token: string) {
+        this.setLogoutToken(c, token, "token");
+        this.setLogoutToken(c, refresh_token, "refresh_token");
+    }
+
+    private setLogoutToken(c: any, token: string, name: string) {
+        const setCookie = cookie.serialize(name, token, {
+            maxAge: 0,
+            httpOnly: true,
+            path: "/"
+        });
+
+        c.res.headers.append('set-cookie', setCookie);
+    }
+
     private async setGenToken(c: any, name: string ,data: any, secret: string, age: number): Promise<string> {
         const token = await sign(data, secret);
         const setCookie = cookie.serialize(name, token, {

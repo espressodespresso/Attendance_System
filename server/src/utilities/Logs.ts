@@ -12,6 +12,7 @@ export const Logs = {
     AccountAuthRoute: "Account auth route executed successfully",
     AccountRefreshRoute: "Account refresh route executed successfully",
     AccountUpdate: "Account route update executed successfully",
+    AccountLogout: "Account logged out successfully",
     // ModuleRoute
     ModuleCreation: "Module created successfully",
     ModuleLoaded: "Module loaded successfully",
@@ -30,7 +31,6 @@ export const Logs = {
     // AnalyticsService
     AttendanceData: "User attendance data found",
     ModuleAttendanceData: "Module attendance data found and compiled",
-
 
     // Route Responses
 

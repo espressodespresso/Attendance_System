@@ -3,6 +3,8 @@ import {RequestService} from "./RequestService";
 import {Accept} from "../enums/Accept.enum";
 import {Fetch} from "../enums/Fetch.enum";
 import {Route} from "../enums/Route.enum";
+import {Utils} from "../utilities/Utils";
+import {Alert} from "../enums/Alert.enum";
 
 const requestService = new RequestService();
 
@@ -13,13 +15,12 @@ export async function verifyStatus(username: string, password: string, fingerpri
 
 export async function getPayloadData() {
     const data: object = await requestService.handleFetch(Fetch.GET, Route.account, "", Accept.JSON);
-    if(data["status"] === 401) {
+    if (data["status"] === 401) {
         await getNewAuthToken();
     }
 
     return data;
 }
-
 
 export async function verifyUserExists(username: string) {
     const body = JSON.stringify({ "username": username });
@@ -67,5 +68,19 @@ export async function getBrowserFingerprint() {
     const result = await fp.get();
     console.log("fingerprint: " + result.visitorId);
     return result.visitorId;
+}
+
+export async function logout() {
+    const data: object = await requestService.handleFetch(Fetch.DELETE, Route.account, '/logout', Accept.JSON);
+    const utils: Utils = new Utils();
+    console.log(`data ${data}`);
+    console.log(`data ${data.toString()}`);
+    if(data["success"]) {
+        utils.generateAlert("Logging you out...", Alert.Success);
+    } else {
+        console.error("Unable to logout?");
+        utils.generateAlert("Unable to logout", Alert.Warning);
+        utils.generateAlert("", Alert.Danger);
+    }
 }
 

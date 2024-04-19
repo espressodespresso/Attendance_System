@@ -6,7 +6,8 @@ import { accountRoute } from "./routes/AccountRoute";
 import {moduleRoute} from "./routes/ModuleRoute";
 import {attendanceRoute} from "./routes/AttendanceRoute";
 import {analyticsRoute} from "./routes/AnalyticsRoute";
-import {Utils} from "./utilities/Utils";
+import { readFileSync } from 'node:fs'
+import {createSecureServer} from "node:http2";
 const dotenv = require('dotenv');
 const dotenvExpand = require('dotenv-expand');
 
@@ -17,7 +18,7 @@ const app = new Hono();
 
 
 app.use('/login', cors({
-    origin: ['http://localhost:63342', 'http://localhost:8080'],
+    origin: ['https://localhost:63342', 'https://localhost:443'],
     allowHeaders: ['Content-Type', 'Accept'],
     credentials: true,
     exposeHeaders: ['Set-Cookie']
@@ -25,16 +26,16 @@ app.use('/login', cors({
 app.route('/login', loginRoute);
 
 app.use('/account/*', cors({
-    origin: ['http://localhost:63342', 'http://localhost:8080'],
+    origin: ['https://localhost:63342', 'https://localhost:443'],
     allowHeaders: ['Content-Type', 'Accept', 'Authorization'],
     credentials: true,
     exposeHeaders: ['Set-Cookie'],
-    allowMethods: ['GET', 'POST'],
+    allowMethods: ['GET', 'POST', 'DELETE'],
 }));
 app.route('/account', accountRoute);
 
 app.use('/module/*', cors({
-    origin: ['http://localhost:63342', 'http://localhost:8080'],
+    origin: ['https://localhost:63342', 'https://localhost:443'],
     allowHeaders: ['Content-Type', 'Accept', 'Authorization'],
     credentials: true,
     exposeHeaders: ['Set-Cookie'],
@@ -43,7 +44,7 @@ app.use('/module/*', cors({
 app.route('/module', moduleRoute);
 
 app.use('/attendance/*', cors({
-    origin: ['http://localhost:63342', 'http://localhost:8080'],
+    origin: ['https://localhost:63342', 'https://localhost:443'],
     allowHeaders: ['Content-Type', 'Accept', 'Authorization'],
     credentials: true,
     exposeHeaders: ['Set-Cookie'],
@@ -52,7 +53,7 @@ app.use('/attendance/*', cors({
 app.route('/attendance', attendanceRoute);
 
 app.use('/analytics/*', cors({
-    origin: ['http://localhost:63342', 'http://localhost:8080'],
+    origin: ['https://localhost:63342', 'https://localhost:443'],
     allowHeaders: ['Content-Type', 'Accept', 'Authorization'],
     credentials: true,
     exposeHeaders: ['Set-Cookie'],
@@ -60,8 +61,24 @@ app.use('/analytics/*', cors({
 }));
 app.route('/analytics', analyticsRoute);
 
-
-serve({
+const server = serve({
     fetch: app.fetch,
-    port: parseInt(process.env.PORT)
+    port: parseInt(process.env.PORT),
+    createServer: createSecureServer,
+    serverOptions: {
+        key: readFileSync('ssl/private.pem'),
+        cert: readFileSync('ssl/certificate.pem')
+    }
 })
+
+
+
+/*serve({
+    fetch: app.fetch,
+    port: parseInt(process.env.PORT),
+    serverOptions: {
+        allowHTTP1: false,
+        key: fs.readFileSync('ssl/private.key'),
+        cert: fs.readFileSync('ssl/certificate.csr')
+    }
+})*/

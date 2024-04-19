@@ -29,6 +29,12 @@ export class AttendanceComponent {
         const subtitle = document.createElement("h4");
         subtitle.textContent = date.toString();
         this.index_container_form.appendChild(subtitle);
+        const terminate = document.createElement("button");
+        terminate.classList.add("btn", "btn-outline-danger", "w-75");
+        terminate.type = "button";
+        terminate.id = "terminatebutton";
+        terminate.textContent = "Terminate Attendance";
+        this.index_container_form.appendChild(terminate);
         this.addBreakpoint(this.index_container_form);
         this.addBreakpoint(this.index_container_form);
         const code = document.createElement("h3");

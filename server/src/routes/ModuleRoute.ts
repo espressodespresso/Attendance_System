@@ -12,7 +12,7 @@ const routeService = new RouteService();
 export const moduleRoute = new Hono();
 
 moduleRoute.get('/userlist', async (c) => {
-    return await routeService.handleErrors(c, {authorised: [Role.Student]}, async (): Promise<Response> => {
+    return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
         const token: string = routeService.getAuthToken(c);
         if(token === null) {
             console.error(Errors.NoAuthToken)

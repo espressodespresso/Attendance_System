@@ -67,15 +67,17 @@ export class AttendanceService {
             return await this._mongoService.findOne(query, Collection.attendance);
         });
 
-        return response["status"];
+        return response;
     }
 
     async generateAttendanceCode(module_name: string, date: Date): Promise<number> {
+        console.log("here");
         const attended: string[] = [];
         let code: number = null;
         while(code === null) {
             let temp = this.generateCode();
-            if(await this.locateActiveCode(temp) === null) {
+            const locateResponse: object = await this.locateActiveCode(temp);
+            if(!locateResponse["status"]) {
                 code = temp;
             }
         }
@@ -103,8 +105,9 @@ export class AttendanceService {
     }
 
     async terminateActiveAttendance(active_code: number): Promise<boolean> {
-        const prevdata: object = await this.locateActiveCode(active_code);
-        if(prevdata !== null) {
+        const codeResponse: object = await this.locateActiveCode(active_code);
+        if(codeResponse["status"]) {
+            const prevdata = codeResponse["result"];
             const attended = prevdata["attended"];
             console.log(attended);
             const attendance = {
@@ -133,10 +136,12 @@ export class AttendanceService {
     }
 
     async attendActiveAttendance(active_code: number, username: string): Promise<object> {
-        const attendanceData: object = await this.locateActiveCode(active_code);
-        if(attendanceData === null) {
+        const codeResponse: object = await this.locateActiveCode(active_code);
+        if(!codeResponse["status"]) {
             return this.altObj(false, Errors.NoAttendanceCode);
         }
+
+        const attendanceData: object = codeResponse["result"];
 
         const moduleName = attendanceData["module"];
         const moduleData = await new ModuleService().loadModule(moduleName);
@@ -173,7 +178,7 @@ export class AttendanceService {
             return this.altObj(false, Errors.UserUpdateAttendance);
         }
 
-        return this.altObj(false, Errors.UserUpdateAttendance);
+        return this.altObj(true, Logs.UserAttended);
     }
 
     private altObj(status: boolean, message: string) {

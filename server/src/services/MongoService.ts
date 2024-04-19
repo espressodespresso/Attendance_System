@@ -112,7 +112,6 @@ export class MongoService {
         } catch (e) {
             console.log(e);
         } finally {
-            await new Utils().checkRefreshTokens()
             await this._client.close();
         }
     }

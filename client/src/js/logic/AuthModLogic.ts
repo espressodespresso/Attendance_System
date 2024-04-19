@@ -191,6 +191,15 @@ export class AuthModLogic {
         const dashboardmbutton = document.getElementById("dashboardmbutton");
         dashboardmbutton.addEventListener("click", () => {
             this._authModule.dashboardModule();
-        })
+        });
+        (async () => {
+            const container: HTMLElement = this._authModule.getModuleForm()
+            const title = document.createElement("h2");
+            title.textContent = "Dashboard";
+            container.appendChild(title);
+            this._utils.generateLocalSpinner(container);
+            await this._utils.initModuleList(container);
+            this._utils.terminateLocalSpinner();
+        })();
     }
 }
