@@ -1,18 +1,29 @@
-import {MongoService} from "./MongoService";
 import {ChartData} from "chart.js";
 import {Collection} from "../enums/Collection.enum";
-import {Errors} from "../utilities/Errors";
-import {Logs} from "../utilities/Logs";
 import {Role} from "../enums/Role.enum";
-import {ModuleService} from "./ModuleService";
+import {ServiceFactory} from "./ServiceFactory";
+import {IMongoService} from "./MongoService";
+import {IModuleService} from "./ModuleService";
+import {MessageUtility} from "../utilities/MessageUtility";
 
-export class AnalyticsService {
-    private _mongoService: MongoService = null;
-    private _moduleService: ModuleService = null;
+export interface IAnalyticsService {
+    getIndexTableData(userInfo: object): Promise<object>;
+    getUserTableData(username: string, module_name: string): Promise<object>;
+    getModuleTableData(module_name: string): Promise<object>;
+    getUserAttendanceRateData(username: string, module_name: string): Promise<object>;
+    getModuleAttendanceRate(module_name: string): Promise<object>;
+    getAverageAttendanceRate(module_name: string): Promise<object>;
+}
+
+export class AnalyticsService implements IAnalyticsService {
+    private _mongoService: IMongoService = null;
+    private _moduleService: IModuleService = null;
+    private _messageUtility: MessageUtility = null;
 
     constructor() {
-        this._mongoService = new MongoService();
-        this._moduleService = new ModuleService();
+        this._mongoService = ServiceFactory.createMongoService();
+        this._moduleService = ServiceFactory.createModuleService();
+        this._messageUtility = MessageUtility.getInstance();
     }
 
     async getIndexTableData(userInfo: object): Promise<object> {
@@ -219,7 +230,7 @@ export class AnalyticsService {
         const comparativeData: object = await this.getComparativeData(username, module_name);
 
         if(comparativeData === null) {
-            return this.messageObj(Errors.ComparativeData, null);
+            return this.messageObj(this._messageUtility.errors.ComparativeData, null);
         }
 
         const userData: object = comparativeData["userData"];
@@ -305,7 +316,7 @@ export class AnalyticsService {
         }
 
         return {
-            message: Logs.ModuleAttendanceData,
+            message: this._messageUtility.logs.ModuleAttendanceData,
             graph: {
                 datasets: [
                     {
@@ -347,7 +358,7 @@ export class AnalyticsService {
         })
 
         return {
-            message: Logs.ModuleAttendanceData,
+            message: this._messageUtility.logs.ModuleAttendanceData,
             data: {
                 datasets: [
                     {
@@ -435,7 +446,7 @@ export class AnalyticsService {
         let attendanceRate: number = 100;
         let message: string = null;
         if(uattendedObj === null) {
-            message = Errors.NoAttendanceData;
+            message = this._messageUtility.errors.NoAttendanceData;
             for(let i = 0; i < mtimetable.length; i++) {
                 if(i+1 <= dateDataPoints.length) {
                     data.push(Math.round(attendanceRate - percentageChangeRate));
@@ -445,7 +456,7 @@ export class AnalyticsService {
                 }
             }
         } else {
-            message = Logs.AttendanceData;
+            message = this._messageUtility.logs.AttendanceData;
             const attendedArray: Date[] = uattendedObj["attended"];
             for(let i = 0; i < mtimetable.length; i++) {
                 if(i+1 <= dateDataPoints.length) {

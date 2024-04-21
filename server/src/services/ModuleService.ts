@@ -1,20 +1,33 @@
-import {MongoService} from "./MongoService";
-import {AccountService} from "./AccountService";
 import {Collection} from "../enums/Collection.enum";
-import {Logs} from "../utilities/Logs";
-import {Errors} from "../utilities/Errors";
+import {ServiceFactory} from "./ServiceFactory";
+import {IMongoService} from "./MongoService";
+import {IAccountService} from "./AccountService";
+import {MessageUtility} from "../utilities/MessageUtility";
 
-export class ModuleService {
-    private _accountService: AccountService = null;
-    private _mongoService: MongoService = null;
+export interface IModuleService {
+    listModules(userInfo: object): Promise<object[]>;
+    updateUsersModuleName(oldName: string, newName: string): Promise<void>;
+    updateUsersModules(addUsers: string[], removeUsers: string[], moduleName: string): Promise<boolean>;
+    verifyModuleExists(module_name: string): Promise<boolean>;
+    createModule(module_name: string, enrolled: string[], leader: string, timetable: []): Promise<void>;
+    loadModules(): Promise<[]>;
+    loadModule(module_name: string): Promise<object>;
+    updateModule(module_name: string, module: object): Promise<void>;
+    deleteModule(module_name: string): Promise<boolean>;
+}
+
+export class ModuleService implements IModuleService {
+    private _accountService: IAccountService = null;
+    private _mongoService: IMongoService = null;
+    private _messageUtility: MessageUtility = null;
 
     constructor() {
-        this._accountService = new AccountService();
-        this._mongoService = new MongoService();
-
+        this._accountService = ServiceFactory.createAccountService();
+        this._mongoService = ServiceFactory.createMongoService();
+        this._messageUtility = MessageUtility.getInstance();
     }
 
-    async listModules(userInfo: object) {
+    async listModules(userInfo: object): Promise<object[]> {
         const module_list: string[] = userInfo["module_list"];
         if(module_list.length === 0) {
             return null;
@@ -77,7 +90,7 @@ export class ModuleService {
         }
     }
 
-    async updateUsersModuleName(oldName: string, newName: string) {
+    async updateUsersModuleName(oldName: string, newName: string): Promise<void> {
         const moduleData: object = await this.loadModule(newName)
         const enrolled: string[] = moduleData["enrolled"];
         const response: object = await this._mongoService.handleConnection
@@ -98,11 +111,11 @@ export class ModuleService {
         });
 
         if(response["status"]) {
-            console.log(Logs.ModuleUpdateDB);
+            console.log(this._messageUtility.logs.ModuleUpdateDB);
         }
     }
 
-    private async updateModuleName(username: string, oldName: string, newName: string) {
+    private async updateModuleName(username: string, oldName: string, newName: string): Promise<void> {
         const userQuery = { username: username };
         const userResponse: object = await this._mongoService.findOne(userQuery, Collection.users);
         const userData: object = userResponse["result"];
@@ -117,7 +130,7 @@ export class ModuleService {
         const response: object = await this._mongoService.updateOne(userQuery, update, Collection.users);
     }
 
-    async updateUsersModules(addUsers: string[], removeUsers: string[], moduleName: string) {
+    async updateUsersModules(addUsers: string[], removeUsers: string[], moduleName: string): Promise<boolean> {
         //const leaderDetails = await mongo.userInfoUsername(moduleLeader);
         // await mongo.updateUser(moduleLeader, )
 
@@ -167,7 +180,7 @@ export class ModuleService {
         return response["status"];
     }
 
-    async createModule(module_name: string, enrolled: string[], leader: string, timetable: []) {
+    async createModule(module_name: string, enrolled: string[], leader: string, timetable: []): Promise<void> {
         const data = {
             name: module_name,
             enrolled: enrolled,
@@ -181,9 +194,9 @@ export class ModuleService {
         });
 
         if(response["status"]) {
-            console.log(Logs.ModuleCreation);
+            console.log(this._messageUtility.logs.ModuleCreation);
         } else {
-            console.error(Errors.ModuleCreation);
+            console.error(this._messageUtility.errors.ModuleCreation);
         }
     }
 
@@ -196,7 +209,7 @@ export class ModuleService {
         return response["result"];
     }
 
-    async loadModule(module_name: string) {
+    async loadModule(module_name: string): Promise<object> {
         const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const query = { name: module_name };
@@ -206,7 +219,7 @@ export class ModuleService {
         return response["result"];
     }
 
-    async updateModule(module_name: string, module: object) {
+    async updateModule(module_name: string, module: object): Promise<void> {
         const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const query = { name: module_name };
@@ -214,9 +227,9 @@ export class ModuleService {
         });
 
         if(response["status"]) {
-            console.log(Logs.ModuleUpdate);
+            console.log(this._messageUtility.logs.ModuleUpdate);
         } else {
-            console.error(Errors.CodeError);
+            console.error(this._messageUtility.errors.CodeError);
         }
     }
 

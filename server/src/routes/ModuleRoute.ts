@@ -1,26 +1,28 @@
 import {Hono} from "hono";
-import {Errors} from "../utilities/Errors";
-import {Logs} from "../utilities/Logs";
-import {ModuleService} from "../services/ModuleService";
-import {RouteService} from "../services/RouteService";
 import {elevatedRoleAuth} from "../services/AuthService";
 import {Role} from "../enums/Role.enum";
-import {AccountService} from "../services/AccountService";
+import {ServiceFactory} from "../services/ServiceFactory";
+import {IModuleService} from "../services/ModuleService";
+import {IRouteService} from "../services/RouteService";
+import {IAccountService} from "../services/AccountService";
+import {MessageUtility} from "../utilities/MessageUtility";
 
-const moduleService = new ModuleService();
-const routeService = new RouteService();
+const moduleService: IModuleService = ServiceFactory.createModuleService();
+const routeService: IRouteService = ServiceFactory.createRouteService();
+const accountService: IAccountService = ServiceFactory.createAccountService();
+const messageUtility: MessageUtility = MessageUtility.getInstance();
 export const moduleRoute = new Hono();
 
 moduleRoute.get('/userlist', async (c) => {
     return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
         const token: string = routeService.getAuthToken(c);
         if(token === null) {
-            console.error(Errors.NoAuthToken)
+            console.error(messageUtility.errors.NoAuthToken)
             c.status(401);
-            return c.text(Errors.NoAuthToken);
+            return c.text(messageUtility.errors.NoAuthToken);
         }
 
-        const userInfo = await new AccountService().getUserInfobyAuthToken(token);
+        const userInfo = await accountService.getUserInfobyAuthToken(token);
         return c.json({ data: await moduleService.listModules(userInfo) });
     })
 })
@@ -31,21 +33,21 @@ moduleRoute.post('/create', async (c) => {
        const moduleName = body["name"];
        const moduleLeader = body["leader"];
        if(!await moduleService.verifyModuleExists(moduleName)) {
-           if(await new AccountService().verifyUser(moduleLeader)) {
+           if(await accountService.verifyUser(moduleLeader)) {
                await moduleService.createModule(moduleName, body["enrolled"], moduleLeader, body["timetable"]);
                let users: string[] = body["enrolled"];
                users.push(moduleLeader);
                await moduleService.updateUsersModules(users, [], moduleName)
-               return c.json({message: Logs.ModuleCreation});
+               return c.json({message: messageUtility.logs.ModuleCreation});
            } else {
-               console.error(Errors.NoModuleLeader);
+               console.error(messageUtility.errors.NoModuleLeader);
                c.status(400);
-               return c.json({message: Errors.NoModuleLeader});
+               return c.json({message: messageUtility.errors.NoModuleLeader});
            }
        } else {
-           console.error(Errors.ModuleExists);
+           console.error(messageUtility.errors.ModuleExists);
            c.status(400);
-           return c.json({message: Errors.ModuleExists});
+           return c.json({message: messageUtility.errors.ModuleExists});
        }
    })
 });
@@ -60,7 +62,7 @@ moduleRoute.get('/:name', async (c) => {
    return await routeService.handleErrors(c, {authorised: [Role.All]}, async (): Promise<Response> => {
        const data = await moduleService.loadModule(routeService.getParam(c, 'name'));
        if(data !== null) {
-           return c.json(data);
+           return c.json(JSON.stringify(data));
        }
    });
 });
@@ -102,7 +104,7 @@ moduleRoute.post('/update', async (c) => {
             }
         }
 
-        return c.text(Logs.ModuleCreation);
+        return c.text(messageUtility.logs.ModuleCreation);
     });
 });
 
@@ -111,10 +113,10 @@ moduleRoute.post('/update', async (c) => {
 moduleRoute.delete('/delete/:name', async (c) => {
     return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
        if(await moduleService.deleteModule(routeService.getParam(c, 'name'))) {
-           return c.text(Logs.ModuleDelete);
+           return c.text(messageUtility.logs.ModuleDelete);
        }  else {
            c.status(400);
-           return c.text(Errors.NoModuleExists);
+           return c.text(messageUtility.errors.NoModuleExists);
        }
     });
 })

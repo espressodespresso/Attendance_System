@@ -1,15 +1,26 @@
-import {MongoService} from "./MongoService";
-import {AccountService} from "./AccountService";
-import {Collection} from "../enums/Collection.enum";
-import {Logs} from "../utilities/Logs";
-import {Errors} from "../utilities/Errors";
-import {ModuleService} from "./ModuleService";
 
-export class AttendanceService {
-    private _mongoService: MongoService = null;
+import {Collection} from "../enums/Collection.enum";
+import {ServiceFactory} from "./ServiceFactory";
+import {IMongoService} from "./MongoService";
+import {IAccountService} from "./AccountService";
+import {MessageUtility} from "../utilities/MessageUtility";
+
+export interface IAttendanceService {
+    generateAttendanceCode(module_name: string, date: Date): Promise<number>;
+    terminateActiveAttendance(active_code: number): Promise<boolean>;
+    attendActiveAttendance(active_code: number, username: string): Promise<object>;
+    locateAttended(module_name: string, date: Date): Promise<object>
+}
+
+export class AttendanceService implements IAttendanceService {
+    private _mongoService: IMongoService = null;
+    private _accountService: IAccountService = null;
+    private _messageUtility: MessageUtility = null;
     
     constructor() {
-        this._mongoService = new MongoService;
+        this._mongoService = ServiceFactory.createMongoService();
+        this._accountService = ServiceFactory.createAccountService();
+        this._messageUtility = MessageUtility.getInstance();
     }
 
     private generateCode(): number {
@@ -53,7 +64,7 @@ export class AttendanceService {
         };
 
         // Update the section within the users document in the database
-        if(await new AccountService().updateUser(username, update)) {
+        if(await this._accountService.updateUser(username, update)) {
             return true;
         }
 
@@ -96,9 +107,9 @@ export class AttendanceService {
         });
 
         if(response["status"]) {
-            console.log(Logs.CodeGenerated);
+            console.log(this._messageUtility.logs.CodeGenerated);
         } else {
-            console.error(Errors.CodeGenerated);
+            console.error(this._messageUtility.errors.CodeGenerated);
         }
 
         return code;
@@ -124,9 +135,9 @@ export class AttendanceService {
             });
 
             if(response["status"]) {
-                console.log(Logs.CodeTerminated);
+                console.log(this._messageUtility.logs.CodeTerminated);
             } else {
-                console.error(Errors.CodeTerminated);
+                console.error(this._messageUtility.errors.CodeTerminated);
             }
 
             return true;
@@ -138,20 +149,20 @@ export class AttendanceService {
     async attendActiveAttendance(active_code: number, username: string): Promise<object> {
         const codeResponse: object = await this.locateActiveCode(active_code);
         if(!codeResponse["status"]) {
-            return this.altObj(false, Errors.NoAttendanceCode);
+            return this.altObj(false, this._messageUtility.errors.NoAttendanceCode);
         }
 
         const attendanceData: object = codeResponse["result"];
 
         const moduleName = attendanceData["module"];
-        const moduleData = await new ModuleService().loadModule(moduleName);
+        const moduleData = await ServiceFactory.createModuleService().loadModule(moduleName);
         if(!(moduleData["enrolled"] as string[]).includes(username)) {
-            return this.altObj(false, Errors.NotEnrolled);
+            return this.altObj(false, this._messageUtility.errors.NotEnrolled);
         }
 
         const attended: string[] = attendanceData["attended"];
         if(attended.includes(username)) {
-            return this.altObj(false, Errors.AttendedPreviously);
+            return this.altObj(false, this._messageUtility.errors.AttendedPreviously);
         }
 
         attended.push(username);
@@ -168,17 +179,17 @@ export class AttendanceService {
         });
 
         if(!response["status"]) {
-            return this.altObj(false, Errors.AttendanceModification);
+            return this.altObj(false, this._messageUtility.errors.AttendanceModification);
         }
 
-        const userData = await new AccountService().getUserInfobyUsername(username);
+        const userData = await this._accountService.getUserInfobyUsername(username);
         const attendance: object[] = userData["attended"];
 
         if(!await this.updateUserAttendance(username, attendance, moduleName, attendanceData["date"])) {
-            return this.altObj(false, Errors.UserUpdateAttendance);
+            return this.altObj(false, this._messageUtility.errors.UserUpdateAttendance);
         }
 
-        return this.altObj(true, Logs.UserAttended);
+        return this.altObj(true, this._messageUtility.logs.UserAttended);
     }
 
     private altObj(status: boolean, message: string) {

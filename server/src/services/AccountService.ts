@@ -1,33 +1,39 @@
 import {decode, verify} from 'hono/jwt'
 import {Collection} from "../enums/Collection.enum";
-import {Logs} from "../utilities/Logs";
-import {Errors} from "../utilities/Errors";
-import {MongoService} from "./MongoService";
+import {ServiceFactory} from "./ServiceFactory";
+import {IMongoService} from "./MongoService";
+import {MessageUtility} from "../utilities/MessageUtility";
 
-export class AccountService {
-    private _mongoService: MongoService = null;
+export interface IAccountService {
+    getUserInfobyAuthToken(token: string): Promise<object>;
+    getUserInfobyUsername(username: string): Promise<object>;
+    getUserInfobyRefreshToken(token: string): Promise<object>;
+    verifyUser(username: string): Promise<boolean>;
+    updateUser(username: string, update: object): Promise<boolean>;
+    storeRefreshToken(token: string, username: string, fingerprint: string): Promise<void>;
+    verifyRefreshToken(token: string, fingerprint: string): Promise<object>;
+    deleteRefreshToken(username: string): Promise<boolean>;
+}
+
+export class AccountService implements IAccountService {
+    private _mongoService: IMongoService = null;
+    private _messageUtility: MessageUtility = null;
 
     constructor() {
-        this._mongoService = new MongoService();
+        this._mongoService = ServiceFactory.createMongoService();
+        this._messageUtility = MessageUtility.getInstance();
     }
 
-    async getUserInfobyAuthToken(token: string) {
+    async getUserInfobyAuthToken(token: string): Promise<object> {
         const payload = decode(token).payload;
-        const response: object = await this._mongoService.handleConnection
-        (async (): Promise<object> => {
-            const query = { username: payload["username"] };
-            return await this._mongoService.findOne(query, Collection.users);
-        });
-
-        if(response["status"]) {
-            console.log(Logs.DataRetrieval);
-            return payload;
-        } else {
-            console.error(Errors.InvalidAccount);
-        }
+        return await this.getUserInfo(payload["username"]);
     }
 
-    async getUserInfobyUsername(username: string) {
+    async getUserInfobyUsername(username: string): Promise<object> {
+        return await this.getUserInfo(username);
+    }
+
+    private async getUserInfo(username: string): Promise<object> {
         const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const query = { username: username }
@@ -35,30 +41,31 @@ export class AccountService {
         });
 
         if(response["status"]) {
-            console.log(Logs.DataRetrieval);
+            console.log(this._messageUtility.logs.DataRetrieval);
             return response["result"];
         } else {
-            console.error(Errors.InvalidAccount);
+            console.error(this._messageUtility.errors.InvalidAccount);
+            return null;
         }
     }
 
-    async getUserInfobyRefreshToken(token: string) {
+    async getUserInfobyRefreshToken(token: string): Promise<object> {
         const fingerprint = decode(token).payload;
         const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const rftokenquery = { fingerprint: fingerprint }
             const rftokenresponse: object = await this._mongoService.findOne(rftokenquery, Collection.token);
             if(!rftokenresponse["status"]) {
-                console.error(Errors.TokenLocation)
+                console.error(this._messageUtility.errors.TokenLocation)
                 return null;
             }
 
-            console.log(Logs.TokenLocation);
+            console.log(this._messageUtility.logs.TokenLocation);
             const rftokenresult = rftokenresponse["result"];
             const userquery = { username: rftokenresult["username"] };
             const userresponse: object = await this._mongoService.findOne(userquery, Collection.users);
             if(!userresponse["status"]) {
-                console.error(Errors.InvalidAccount);
+                console.error(this._messageUtility.errors.InvalidAccount);
                 return null;
             }
 
@@ -67,7 +74,7 @@ export class AccountService {
 
         const userresult = response["result"];
         delete userresult["password"];
-        console.log(Logs.DataRetrieval);
+        console.log(this._messageUtility.logs.DataRetrieval);
         return userresult;
     }
 
@@ -81,7 +88,7 @@ export class AccountService {
         return response["status"]
     }
 
-    async updateUser(username: string, update: object) {
+    async updateUser(username: string, update: object): Promise<boolean> {
         const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const query = { username: username };
@@ -89,9 +96,9 @@ export class AccountService {
         });
 
         if(response["status"]) {
-            console.log(Logs.AccountUpdate);
+            console.log(this._messageUtility.logs.AccountUpdate);
         } else {
-            console.error(Errors.NoAccount);
+            console.error(this._messageUtility.errors.NoAccount);
         }
 
         return response["status"];
@@ -99,7 +106,7 @@ export class AccountService {
 
     // Token Functions
 
-    async storeRefreshToken(token: string, username: string, fingerprint: string) {
+    async storeRefreshToken(token: string, username: string, fingerprint: string): Promise<void> {
         const data = {
             "refresh_token": token,
             "username": username,
@@ -113,31 +120,30 @@ export class AccountService {
         });
 
         if(response["status"]) {
-            console.log(Logs.TokenInsertion);
+            console.log(this._messageUtility.logs.TokenInsertion);
         } else {
-            console.error(Errors.StoreToken);
+            console.error(this._messageUtility.errors.StoreToken);
         }
     }
 
-    async verifyRefreshToken(token: string, fingerprint: string) {
+    async verifyRefreshToken(token: string, fingerprint: string): Promise<object> {
         const payload = await verify(token, process.env.REFRESH_SECRET);
         if(payload === fingerprint) {
 
-            console.log(Logs.TokenVerification);
+            console.log(this._messageUtility.logs.TokenVerification);
             return {
                 valid: true,
                 payload: payload
             }
         } else {
-
-            console.error(Errors.TokenVerification);
+            console.error(this._messageUtility.errors.TokenVerification);
             return {
                 valid: false
             }
         }
     }
 
-    async deleteRefreshToken(username: string) {
+    async deleteRefreshToken(username: string): Promise<boolean> {
         const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const query = { username: {$regex: username} };
@@ -146,15 +152,11 @@ export class AccountService {
 
         const status = response["status"];
         if(status) {
-            console.log(Logs.TokenDeletion);
+            console.log(this._messageUtility.logs.TokenDeletion);
         } else {
-            console.error(Errors.TokenDeletion);
+            console.error(this._messageUtility.errors.TokenDeletion);
         }
 
         return status;
-    }
-
-    async deleteTokensLogout(username: string) {
-        return await this.deleteRefreshToken(username);
     }
 }

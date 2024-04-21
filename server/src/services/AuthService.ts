@@ -1,11 +1,16 @@
 import {Role} from "../enums/Role.enum";
-import {Errors} from "../utilities/Errors";
-import {Logs} from "../utilities/Logs";
 import {decode} from 'hono/jwt'
-import {MongoService} from "./MongoService";
 import {Collection} from "../enums/Collection.enum";
 import {AuthState} from "../enums/AuthState.enum";
-import {Utils} from "../utilities/Utils";
+import {GeneralUtility} from "../utilities/GeneralUtility";
+import {ServiceFactory} from "./ServiceFactory";
+import {IMongoService} from "./MongoService";
+import {MessageUtility} from "../utilities/MessageUtility";
+
+export interface IAuthService {
+    login(username: string, password: string): Promise<object>;
+    verifyRoleAuth(roleAuth: RoleAuth, cookies: string[]): object;
+}
 
 export interface RoleAuth {
     authorised: Role[]
@@ -15,21 +20,23 @@ export const elevatedRoleAuth: RoleAuth = {
     authorised: [Role.Lecturer, Role.IT, Role.AdministrativeFM]
 }
 
-export class AuthService {
-    private _mongoService: MongoService = null;
+export class AuthService implements IAuthService {
+    private _mongoService: IMongoService = null;
+    private _messageUtility: MessageUtility = null;
 
     constructor() {
-        this._mongoService = new MongoService();
+        this._mongoService = ServiceFactory.createMongoService();
+        this._messageUtility = MessageUtility.getInstance();
     }
 
-    async login(username: string, password: string) {
+    async login(username: string, password: string): Promise<object> {
         const response: object = await this._mongoService.handleConnection
         (async (): Promise<object> => {
             const query = { username: username };
             return await this._mongoService.findOne(query, Collection.users);
         });
         // Clears refresh tokens
-        await new Utils().checkRefreshTokens();
+        await GeneralUtility.getInstance().checkRefreshTokens();
 
         let obj = {
             authstate: undefined,
@@ -38,18 +45,18 @@ export class AuthService {
         if(response["status"]) {
             let account = response["result"];
             if(account["password"] === password) {
-                console.log(Logs.Login);
+                console.log(this._messageUtility.logs.Login);
                 delete account["password"]
                 obj.authstate = AuthState.Located;
                 obj.account = account;
                 return obj;
             } else {
-                console.error(Errors.InvalidPassword);
+                console.error(this._messageUtility.errors.InvalidPassword);
                 obj.authstate = AuthState.InvalidPass;
                 return obj;
             }
         } else {
-            console.error(Errors.InvalidAccount)
+            console.error(this._messageUtility.errors.InvalidAccount)
             obj.authstate = AuthState.NotLocated;
             return obj;
         }
@@ -57,7 +64,7 @@ export class AuthService {
 
     verifyRoleAuth(roleAuth: RoleAuth, cookies: string[]): object {
         if(roleAuth.authorised.includes(Role.Exclude)) {
-            return this.objResponse(200, Logs.Authorised);
+            return this.objResponse(200, this._messageUtility.logs.Authorised);
         }
 
         let token: string = null;
@@ -69,16 +76,16 @@ export class AuthService {
         }
 
         if(token === null) {
-            console.error(Errors.NoAuthToken);
-            return this.objResponse(401, Errors.NoAuthToken);
+            console.error(this._messageUtility.errors.NoAuthToken);
+            return this.objResponse(401, this._messageUtility.errors.NoAuthToken);
         }
 
         if(roleAuth.authorised.includes(decode(token).payload["role"])
             || roleAuth.authorised.includes(Role.All)) {
-            return this.objResponse(200, Logs.Authorised);
+            return this.objResponse(200, this._messageUtility.logs.Authorised);
         }
 
-        return this.objResponse(403, Errors.NotAuthorised);
+        return this.objResponse(403, this._messageUtility.errors.NotAuthorised);
     }
 
     private objResponse(status: number, message: string): object {

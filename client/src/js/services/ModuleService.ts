@@ -30,7 +30,7 @@ export async function loadModules(): Promise<object[]> {
 
 export async function loadModule(moduleName: string) {
     const data: object = await requestService.handleFetch(Fetch.GET, Route.module, `/${moduleName}`, Accept.JSON);
-    return data["json"];
+    return JSON.parse(data["json"]);
 }
 
 export async function updateModule(moduleName: string, data: object) {

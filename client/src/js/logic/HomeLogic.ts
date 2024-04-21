@@ -41,13 +41,13 @@ export class HomeLogic {
             switch (payloadRole) {
                 case Role.Student: {
                     const module: object = await loadModule(module_list[Math.round(Math.random() * (module_list.length - 1))]);
-                    const response: object = JSON.parse(await getUserAttendanceRateData(username, module["name"]));
+                    const response: object = await getUserAttendanceRateData(username, module["name"])
                     this.initChart(response["data"], ChartType.Line);
                     break;
                 }
                 case Role.Lecturer: {
                     const module: object = await loadModule(module_list[Math.round(Math.random() * (module_list.length - 1))]);
-                    const response: object = JSON.parse(await getModuleAttendanceRateData(module["name"]));
+                    const response: object = await getModuleAttendanceRateData(module["name"])
                     this.initChart(response["graph"], ChartType.Bar);
                     break;
                 }
@@ -55,7 +55,7 @@ export class HomeLogic {
                 case Role.IT:
                     const modules: object[] = await loadModules();
                     const module: object = modules[Math.round(Math.random() * (modules.length - 1))];
-                    const response: object = JSON.parse(await getModuleAttendanceRateData(module["name"]));
+                    const response: object = await getModuleAttendanceRateData(module["name"])
                     this.initChart(response["graph"], ChartType.Bar);
                     break;
             }
@@ -97,7 +97,7 @@ export class HomeLogic {
     }
 
     async initLessonsTable() {
-        const data: object = JSON.parse(await getIndexTableData());
+        const data: object = await getIndexTableData()
         const container: HTMLElement = document.getElementById("index-side-container-tab2-content");
         const thead = document.getElementById("tablehead");
         const tbody = document.getElementById("tablebody");

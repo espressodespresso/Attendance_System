@@ -1,10 +1,19 @@
 import {Collection} from "../enums/Collection.enum";
-import {AuthState} from "../enums/AuthState.enum";
-import {AccountService} from "./AccountService";
-import { MongoClient } from 'mongodb'
-import {Utils} from "../utilities/Utils";
+import {Db, MongoClient} from 'mongodb'
 
-export class MongoService {
+export interface IMongoService {
+    findOne(query: object, collection: Collection): Promise<object>;
+    findall(collection: Collection): Promise<object>;
+    insertOne(data: object, collection: Collection): Promise<object>;
+    deleteOne(query: object, collection: Collection): Promise<object>;
+    deleteMany(query: object, collection: Collection): Promise<object>;
+    updateOne(filter: object, data: object, collection: Collection): Promise<object>;
+    updateMany(filter: object, data: object, collection: Collection): Promise<object>;
+    replaceOne(query: object, replacement: object, collection: Collection): Promise<object>;
+    handleConnection(innerFunc: (...args: any[]) => any): Promise<any>
+}
+
+export class MongoService implements IMongoService {
     //private client = new MongoClient(process.env["MONGOURI "]);
     private _client = new MongoClient("");
     private _database = this._client.db('database');
@@ -92,7 +101,7 @@ export class MongoService {
         }
     }
 
-    private getCollection(collection: Collection) {
+    private getCollection(collection: Collection): any {
         switch (collection) {
             case Collection.users:
                 return this._usersCollection;
@@ -105,7 +114,7 @@ export class MongoService {
         }
     }
 
-    async handleConnection(innerFunc: (...args: any[]) => any) {
+    async handleConnection(innerFunc: (...args: any[]) => any): Promise<any> {
         try {
             await this._client.connect();
             return await innerFunc();

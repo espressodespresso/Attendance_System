@@ -85,7 +85,7 @@ export class AuthModLogic {
     }
 
     submitButton(utils: Utils, modules: object[], action: ModuleAction, component: AuthorativeModule) {
-        // utilities: Utils, modules: object[], action?: ModuleAction, component?: AuthorativeModule
+        // utilities: GeneralUtility, modules: object[], action?: ModuleAction, component?: AuthorativeModule
         const submitbuttom = document.getElementById("smsubmitbutton");
         submitbuttom.addEventListener("click", () => {
             let module: object = null;

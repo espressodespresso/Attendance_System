@@ -1,38 +1,35 @@
 import {Hono} from "hono";
 import {AuthState} from "../enums/AuthState.enum";
-import {Logs} from "../utilities/Logs";
-import {Errors} from "../utilities/Errors";
-import {RouteService} from "../services/RouteService";
 import {Role} from "../enums/Role.enum";
-import {AuthService} from "../services/AuthService";
+import {ServiceFactory} from "../services/ServiceFactory";
+import {IRouteService} from "../services/RouteService";
+import {MessageUtility} from "../utilities/MessageUtility";
 const cookie = require('cookie')
 
-const routeService = new RouteService();
+const routeService: IRouteService = ServiceFactory.createRouteService();
+const messageUtility: MessageUtility = MessageUtility.getInstance();
 export const loginRoute = new Hono()
 
 loginRoute.post('/', async (c) => {
     return await routeService.handleErrors(c, {authorised: [Role.Exclude]},async (): Promise<Response> => {
         const body: JSON = await routeService.getBody(c);
-        const data = await new AuthService().login(body["username"], body["password"]);
-        switch (data.authstate) {
+        const data = await ServiceFactory.createAuthService().login(body["username"], body["password"]);
+        switch (data["authstate"]) {
             case AuthState.Located:
-                await routeService.setGenAuthToken(c, data.account);
+                await routeService.setGenAuthToken(c, data["account"]);
                 await routeService.setGenRefreshToken(c, body["fingerprint"], body["username"]);
                 break;
             case AuthState.InvalidPass:
                 c.status(401);
-                return c.text(Errors.InvalidPassword);
+                return c.text(messageUtility.errors.InvalidPassword);
             case AuthState.NotLocated:
                 c.status(401);
-                return c.text(Errors.InvalidAccount);
+                return c.text(messageUtility.errors.InvalidAccount);
             default:
-                console.error(Errors.CodeError);
-                return c.text(Errors.APIError);
+                console.error(messageUtility.errors.CodeError);
+                return c.text(messageUtility.errors.APIError);
         }
 
-        return c.text(Logs.Login);
+        return c.text(messageUtility.logs.Login);
     });
-
-    //console.log(response["headers"].includes("text/plain"));
-
 });

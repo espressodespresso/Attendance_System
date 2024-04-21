@@ -118,12 +118,12 @@ export class AnalyticsLogic {
     }
 
     private async initUserTable() {
-        const response: object = JSON.parse(await getUserTableData(this.getUserInfo()["username"], this._selectedModule["name"]));
+        const response: object = await getUserTableData(this.getUserInfo()["username"], this._selectedModule["name"])
         this.initTable(response["headStrings"], response["bodyStrings"]);
     }
 
     private async initModuleTable() {
-        const response: object = JSON.parse(await getModuleTableData(this._selectedModule["name"]));
+        const response: object = await getModuleTableData(this._selectedModule["name"])
         this.initTable(response["headStrings"], response["bodyStrings"]);
     }
 
@@ -163,18 +163,18 @@ export class AnalyticsLogic {
     }
 
     private async initModuleAverageAttendanceRateGraph(container: HTMLElement) {
-        const response: object = JSON.parse(await getModuleAverageAttendanceRateData(this._selectedModule["name"]));
+        const response: object = await getModuleAverageAttendanceRateData(this._selectedModule["name"])
         await this.initGraph("moduleAvgAttendanceRateChart", ChartType.Line, response["data"], container);
     }
 
     private async initModuleAttendanceRateGraph(container: HTMLElement) {
-        const response: object = JSON.parse(await getModuleAttendanceRateData(this._selectedModule["name"]));
+        const response: object = await getModuleAttendanceRateData(this._selectedModule["name"])
         await this.initGraph("userAttendanceRateChart", ChartType.Bar, response["graph"], container, true, response);
     }
 
     private async initAttendanceRateGraph(container: HTMLElement) {
-        const response: object = JSON.parse(await getUserAttendanceRateData
-        (this.getUserInfo()["username"] ,this._selectedModule["name"]));
+        const response: object = await getUserAttendanceRateData
+        (this.getUserInfo()["username"] ,this._selectedModule["name"])
         await this.initGraph("attendanceRateChart", ChartType.Line, response["data"], container);
     }
 

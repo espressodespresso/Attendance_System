@@ -1,17 +1,31 @@
-import {Errors} from "../utilities/Errors";
 import {sign} from 'hono/jwt'
-import {MongoService} from "./MongoService";
 import {AuthService, RoleAuth} from "./AuthService";
-import {decode} from "hono/dist/types/middleware/jwt";
-import {Role} from "../enums/Role.enum";
-import {AccountService} from "./AccountService";
+import {ServiceFactory} from "./ServiceFactory";
+import {MessageUtility} from "../utilities/MessageUtility";
+
 const cookie = require('cookie')
 
-export class RouteService {
+export interface IRouteService {
+    handleErrors(c: any, ac: RoleAuth , innerFunc: (...args: any[]) => any): Promise<any>;
+    getBody(c: any): Promise<JSON>;
+    getParam(c: any, name: string): any;
+    getAuthToken(c: any): string;
+    getRefreshToken(c: any): string;
+    setGenAuthToken(c: any, account: object): Promise<void>;
+    setGenRefreshToken(c: any, fingerprint: string, username: string): Promise<void>
+    logoutToken(c: any, token: string, refresh_token: string): void;
+}
 
-    async handleErrors(c: any, ac: RoleAuth , innerFunc: (...args: any[]) => any) {
+export class RouteService implements IRouteService{
+    private _messageUtility: MessageUtility = null;
+
+    constructor() {
+        this._messageUtility = MessageUtility.getInstance();
+    }
+
+    async handleErrors(c: any, ac: RoleAuth , innerFunc: (...args: any[]) => any): Promise<any> {
         try {
-            const objResponse = new AuthService().verifyRoleAuth(ac, this.getCookiesArray(c));
+            const objResponse = ServiceFactory.createAuthService().verifyRoleAuth(ac, this.getCookiesArray(c));
             switch (objResponse["status"]) {
                 case 200:
                     return innerFunc();
@@ -26,13 +40,13 @@ export class RouteService {
             console.error(objResponse["message"]);
             return c.text(objResponse["message"]);
         } catch (e) {
-            console.error(Errors.CodeError + "\n" + e);
+            console.error(this._messageUtility.errors.CodeError + "\n" + e);
             c.status(500);
-            return c.text(Errors.APIError);
+            return c.text(this._messageUtility.errors.APIError);
         }
     }
 
-    private getCookiesArray(c: any) {
+    private getCookiesArray(c: any): string[] {
         return c.req.header('cookie').split(" ");
     }
 
@@ -40,7 +54,7 @@ export class RouteService {
         return JSON.parse(await c.req.text());
     }
 
-    getParam(c: any, name: string) {
+    getParam(c: any, name: string): any {
         return c.req.param(name);
     }
 
@@ -64,21 +78,21 @@ export class RouteService {
         return null;
     }
 
-    async setGenAuthToken(c: any, account: object) {
+    async setGenAuthToken(c: any, account: object): Promise<void> {
         const test = await this.setGenToken(c, "token", account, process.env.SECRET, 900);
     }
 
-    async setGenRefreshToken(c: any, fingerprint: string, username: string) {
+    async setGenRefreshToken(c: any, fingerprint: string, username: string): Promise<void> {
         const token: string = await this.setGenToken(c, "refresh_token", fingerprint, process.env.REFRESH_SECRET, 1800);
-        await new AccountService().storeRefreshToken(token, username, fingerprint);
+        await ServiceFactory.createAccountService().storeRefreshToken(token, username, fingerprint);
     }
 
-    logoutToken(c: any, token: string, refresh_token: string) {
+    logoutToken(c: any, token: string, refresh_token: string): void {
         this.setLogoutToken(c, token, "token");
         this.setLogoutToken(c, refresh_token, "refresh_token");
     }
 
-    private setLogoutToken(c: any, token: string, name: string) {
+    private setLogoutToken(c: any, token: string, name: string): void {
         const setCookie = cookie.serialize(name, token, {
             maxAge: 0,
             httpOnly: true,
