@@ -1,27 +1,37 @@
-import {generateAttendanceCode} from "../services/AttendanceService";
-import {AttendanceLogic} from "../logic/AttendanceLogic";
-import {Utils} from "../utilities/Utils";
+import {IAttendanceLogic} from "../logic/AttendanceLogic";
+import {GeneralUtility} from "../utilities/GeneralUtility";
+import {LogicFactory} from "../logic/LogicFactory";
 
-export class AttendanceComponent {
-    private _index_container_form: HTMLElement;
-    private _attendanceLogic: AttendanceLogic = null;
-    constructor(index_container_form: HTMLElement) {
-        this._attendanceLogic = new AttendanceLogic(this);
+export interface IAttendanceComponent {
+    authAttendanceSelectComponent(payload: object): Promise<void>;
+    authAttendanceCodeComponent(module, date: Date): Promise<void>;
+    userAttendanceComponent(): void;
+    get index_container_form(): HTMLElement;
+}
+
+export class AttendanceComponent implements IAttendanceComponent {
+    private readonly _index_container_form: HTMLElement;
+    private _attendanceLogic: IAttendanceLogic = null;
+    private readonly _payload: object = null;
+
+    constructor(index_container_form: HTMLElement, payload: object) {
+        this._payload = payload;
+        this._attendanceLogic = LogicFactory.createAttendanceLogic(this, payload);
         this._index_container_form = index_container_form;
     }
 
-    get index_container_form() {
+    get index_container_form(): HTMLElement {
         return this._index_container_form;
     }
 
-    async authAttendanceSelectComponent(payload: object) {
-        const utils: Utils = new Utils();
+    async authAttendanceSelectComponent(): Promise<void> {
+        const utils: GeneralUtility = GeneralUtility.getInstance();
         utils.selectExistingModuleComponent(this.index_container_form, "Select a Module", "Select Module");
-        await utils.selectEMCComponentLogic(payload);
+        await utils.selectEMCComponentLogic(this._payload);
         this._attendanceLogic.submitModuleButton(utils);
     }
 
-    async authAttendanceCodeComponent(module, date: Date) {
+    async authAttendanceCodeComponent(module, date: Date): Promise<void> {
         this.index_container_form.innerHTML = "";
         const title = document.createElement("h2");
         title.textContent = module;
@@ -43,7 +53,7 @@ export class AttendanceComponent {
         await this._attendanceLogic.attendanceAuthCodeComponent(module, date);
     }
 
-    userAttendanceComponent() {
+    userAttendanceComponent(): void {
         const h2 = document.createElement("h2");
         h2.textContent = "Register for Lesson";
         this.index_container_form.appendChild(h2);

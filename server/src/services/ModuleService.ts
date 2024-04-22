@@ -1,8 +1,8 @@
 import {Collection} from "../enums/Collection.enum";
 import {ServiceFactory} from "./ServiceFactory";
-import {IMongoService} from "./MongoService";
 import {IAccountService} from "./AccountService";
 import {MessageUtility} from "../utilities/MessageUtility";
+import {IMongoService} from "./MongoService";
 
 export interface IModuleService {
     listModules(userInfo: object): Promise<object[]>;

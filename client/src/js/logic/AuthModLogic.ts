@@ -1,16 +1,32 @@
-import {verifyUserExists} from "../services/AuthService";
-import {createModule, deleteModule, updateModule} from "../services/ModuleService";
-import {AuthorativeModule} from "../components/modules/AuthModComponent";
+import {IAuthService} from "../services/AuthService";
+import {IModuleService} from "../services/ModuleService";
+import {IAuthModComponent} from "../components/modules/AuthModComponent";
 import {ModuleAction} from "../enums/ModuleAction.enum";
-import {Utils} from "../utilities/Utils";
 import {disableSpinner} from "../index";
 import {Alert} from "../enums/Alert.enum";
+import {ServiceFactory} from "../services/ServiceFactory";
+import {GeneralUtility} from "../utilities/GeneralUtility";
 
-export class AuthModLogic {
-    private _authModule: AuthorativeModule = null;
-    private _utils: Utils = null;
+export interface IAuthModLogic {
+    createModule(fp: any): void;
+    submitButton(utils: GeneralUtility, modules: object[], action: ModuleAction, component: IAuthModComponent): void;
+    editModule(fp: any, module: object): void;
+    deleteModule(fp: any, module: object): void;
+    dashboardModule(): void;
+}
 
-    constructor(component: AuthorativeModule, payload: object) {
+export class AuthModLogic implements IAuthModLogic {
+    private _authModule: IAuthModComponent = null;
+    private _utils: GeneralUtility = null;
+    private _moduleService: IModuleService = null;
+    private _authService: IAuthService = null;
+
+    constructor(component: IAuthModComponent, payload: object) {
+        this._authModule = component;
+        this._utils = GeneralUtility.getInstance();
+        this._moduleService = ServiceFactory.createModuleService();
+        this._authService = ServiceFactory.createAuthService();
+
         const creatembutton = document.getElementById("creatembutton") as HTMLInputElement;
         creatembutton.addEventListener("click", function () {
             component.createModule();
@@ -24,8 +40,6 @@ export class AuthModLogic {
             await component.selectExistingModule("Delete an existing module", "Select Module", ModuleAction.Delete, payload);
         });
 
-        this._authModule = component;
-        this._utils = new Utils();
         disableSpinner();
     }
 
@@ -33,7 +47,7 @@ export class AuthModLogic {
         const addUserTextBox = document.getElementById("mnenrolledinput") as HTMLInputElement;
         let user = addUserTextBox.value;
         if(!users.includes(user)) {
-            const userExists = await verifyUserExists(user);
+            const userExists = await this._authService.verifyUserExists(user);
             if(userExists) {
                 users.push(user);
                 const list_group = document.getElementById("mnulname");
@@ -58,7 +72,7 @@ export class AuthModLogic {
         }
     }
 
-    createModule(fp: any) {
+    createModule(fp: any): void {
         let users: string[] = []
         const addUserButton = document.getElementById("mnadduserbutton");
         addUserButton.addEventListener("click", async () => {
@@ -75,7 +89,7 @@ export class AuthModLogic {
                 leader: leaderTextBox.value,
                 timetable: fp.selectedDates
             };
-            if(await createModule(module)) {
+            if(await this._moduleService.createModule(module)) {
                 this._utils.generateAlert("Module created successfully.", Alert.Success);
                 this._authModule.dashboardModule();
             } else {
@@ -84,7 +98,7 @@ export class AuthModLogic {
         });
     }
 
-    submitButton(utils: Utils, modules: object[], action: ModuleAction, component: AuthorativeModule) {
+    submitButton(utils: GeneralUtility, modules: object[], action: ModuleAction, component: IAuthModComponent): void {
         // utilities: GeneralUtility, modules: object[], action?: ModuleAction, component?: AuthorativeModule
         const submitbuttom = document.getElementById("smsubmitbutton");
         submitbuttom.addEventListener("click", () => {
@@ -112,7 +126,7 @@ export class AuthModLogic {
         });
     }
 
-    editModule(fp: any, module: object) {
+    editModule(fp: any, module: object): void {
         const nameinput = document.getElementById("mnnameinput") as HTMLInputElement;
         nameinput.value = module["name"];
         const ulname = document.getElementById("mnulname");
@@ -147,9 +161,9 @@ export class AuthModLogic {
                 leader: leaderinput.value,
                 timetable: fp.selectedDates
             };
-            if(await verifyUserExists(newModule["leader"])) {
+            if(await this._authService.verifyUserExists(newModule["leader"])) {
                 try {
-                    await updateModule(module["name"], newModule);
+                    await this._moduleService.updateModule(module["name"], newModule);
                 } catch {
                     this._utils.generateAlert("", Alert.Danger);
                 } finally {
@@ -163,7 +177,7 @@ export class AuthModLogic {
         });
     }
 
-    deleteModule(fp: any, module: object) {
+    deleteModule(fp: any, module: object): void {
         let enrolledArray = module["enrolled"];
         const enrolledul = document.getElementById("denrolledul");
         enrolledul.innerHTML = "";
@@ -178,7 +192,7 @@ export class AuthModLogic {
         fp.setDate(module["timetable"]);
         const deleteButton = document.getElementById("dbutton");
         deleteButton.addEventListener("click", async () => {
-            if(await deleteModule(module["name"])) {
+            if(await this._moduleService.deleteModule(module["name"])) {
                 this._utils.generateAlert("Module successfully deleted.", Alert.Success);
                 this._authModule.dashboardModule();
             } else {
@@ -187,7 +201,7 @@ export class AuthModLogic {
         });
     }
 
-    dashboardModule() {
+    dashboardModule(): void {
         const dashboardmbutton = document.getElementById("dashboardmbutton");
         dashboardmbutton.addEventListener("click", () => {
             this._authModule.dashboardModule();

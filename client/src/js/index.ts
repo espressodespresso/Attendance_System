@@ -1,10 +1,8 @@
-import {getBrowserFingerprint, getPayloadData, verifyStatus} from "./services/AuthService";
-import {insert} from "./components/NavbarComponent"
-import {HomeComponent} from "./components/home/HomeComponent";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
-import {AuthorativeModule} from "./components/modules/AuthModComponent";
 import {loadModules} from "./modules";
-import {AnalyticsComponent} from "./components/AnalyticsComponent";
+import {IAuthService} from "./services/AuthService";
+import {ServiceFactory} from "./services/ServiceFactory";
+import {ComponentFactory} from "./components/ComponentFactory";
 
 const fpPromise = FingerprintJS.load();
 
@@ -23,10 +21,10 @@ async function loadItems() {
             await loadModules(payload);
             break;
         case "/attendance_system/client/src/index.html":
-            new HomeComponent(payload);
+            ComponentFactory.createHomeComponent(payload);
             break;
         case "/attendance_system/client/src/analytics.html":
-            new AnalyticsComponent(payload);
+            ComponentFactory.createAnalyticsComponent(payload);
             break;
         case "/attendance_system/client/src/login.html":
             disableSpinner();
@@ -35,16 +33,15 @@ async function loadItems() {
 }
 
 async function verifyPayload(): Promise<object> {
-    let payload = await getPayloadData();
+    const authService: IAuthService = ServiceFactory.createAuthService();
+    let payload = await authService.getPayloadData();
     switch (payload["status"]) {
         case 200:
             if(document.title === "Login") {
                 window.location.href = "/attendance_system/client/src/index.html";
-                insert()
-            } else {
-                insert();
             }
 
+            ComponentFactory.createNavbarComponent();
             return payload;
 
         case 401:
@@ -65,7 +62,7 @@ async function verifyPayload(): Promise<object> {
         loginButton.addEventListener("click", async function (){
             let username = (document.getElementById("usernameInput") as HTMLInputElement).value;
             let password = (document.getElementById("passwordInput") as HTMLInputElement).value;
-            if(await verifyStatus(username, password, await getBrowserFingerprint())) {
+            if(await authService.verifyStatus(username, password, await authService.getBrowserFingerprint())) {
                 window.location.href = "/attendance_system/client/src/index.html"
             }
         })

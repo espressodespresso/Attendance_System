@@ -1,17 +1,12 @@
-import {UserModComponent} from "../components/modules/UserModComponent";
 import {disableSpinner} from "../index";
-import {loadModule, moduleList} from "../services/ModuleService";
-import {Utils} from "../utilities/Utils";
+import {GeneralUtility} from "../utilities/GeneralUtility";
+import {IUserModComponent} from "../components/modules/UserModComponent";
+
 
 export class UserModLogic {
-    private _component: UserModComponent = null;
-    private _utils: Utils = null;
-
-    constructor(component: UserModComponent) {
-        this._component = component;
-        this._utils = new Utils();
+    constructor(component: IUserModComponent) {
         (async () => {
-            await this._utils.initModuleList(component.container);
+            await GeneralUtility.getInstance().initModuleList(component.container);
             disableSpinner();
         })();
     }

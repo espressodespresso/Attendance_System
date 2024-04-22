@@ -1,24 +1,35 @@
-import {attendActiveAttendance, generateAttendanceCode, terminateAttendanceCode} from "../services/AttendanceService";
-import {loadModule} from "../services/ModuleService";
-import {AttendanceComponent} from "../components/AttendanceComponent";
-import {Utils} from "../utilities/Utils";
+import {IAttendanceService} from "../services/AttendanceService";
+import {IAttendanceComponent} from "../components/AttendanceComponent";
+import {GeneralUtility} from "../utilities/GeneralUtility";
 import QRCode from 'qrcode'
 import {Alert} from "../enums/Alert.enum";
 import {Html5Qrcode} from "html5-qrcode";
+import {ServiceFactory} from "../services/ServiceFactory";
 
-export class AttendanceLogic {
-    private _attendanceComponent: AttendanceComponent = null;
+export interface IAttendanceLogic {
+    attendanceAuthCodeComponent(module_name: string, date: Date): Promise<void>;
+    attendanceUserCodeComponent(): void;
+    submitModuleButton(utils: GeneralUtility): void;
+    selectDate(moduleName: string): Promise<void>;
+}
+
+export class AttendanceLogic implements IAttendanceLogic{
+    private _attendanceComponent: IAttendanceComponent = null;
     private _selectedDate: Date = null;
-    private _utils: Utils = null;
+    private _utils: GeneralUtility = null;
+    private _attendanceService: IAttendanceService = null;
+    private readonly _payload: object = null;
 
-    constructor(component: AttendanceComponent) {
+    constructor(component: IAttendanceComponent, payload: object) {
+        this._payload = payload;
         this._attendanceComponent = component;
-        this._utils = new Utils();
+        this._utils = GeneralUtility.getInstance();
+        this._attendanceService = ServiceFactory.createAttendanceService();
     }
 
-    async attendanceAuthCodeComponent(module_name: string, date: Date) {
+    async attendanceAuthCodeComponent(module_name: string, date: Date): Promise<void> {
         const codeh3 = document.getElementById("attendanceCode");
-        const code = await generateAttendanceCode(module_name, date);
+        const code = await this._attendanceService.generateAttendanceCode(module_name, date);
         codeh3.textContent = code.toString();
         try {
             const qrcode = await QRCode.toCanvas(code.toString(), { errorCorrectionLevel: 'H' });
@@ -29,18 +40,19 @@ export class AttendanceLogic {
 
         const terminate = document.getElementById("terminatebutton");
         terminate.addEventListener('click', async () => {
-            const status = await terminateAttendanceCode(code);
+            const status = await this._attendanceService.terminateAttendanceCode(code);
             if(status) {
                 this._utils.generateAlert("Code terminated successfully", Alert.Success);
             } else {
                 this._utils.generateAlert("", Alert.Danger);
             }
             this._attendanceComponent.index_container_form.innerHTML = ""
+            await this._attendanceComponent.authAttendanceSelectComponent(this._payload);
         });
 
         window.addEventListener('beforeunload', async () => {
-            const utils = new Utils();
-            const status = await terminateAttendanceCode(code);
+            const utils = GeneralUtility.getInstance();
+            const status = await this._attendanceService.terminateAttendanceCode(code);
             if(status) {
                 utils.generateAlert("Code terminated successfully", Alert.Success);
             } else {
@@ -49,13 +61,13 @@ export class AttendanceLogic {
         });
     }
 
-    attendanceUserCodeComponent() {
+    attendanceUserCodeComponent(): void {
         const submit = document.getElementById("uasubmit");
         submit.addEventListener("click", async () => {
             const codeInput = document.getElementById("codeInput") as HTMLInputElement;
             const code = codeInput.value;
             if(code !== "") {
-                const data = await attendActiveAttendance(parseInt(code));
+                const data = await this._attendanceService.attendActiveAttendance(parseInt(code));
                 if(data["status"]) {
                     this._utils.generateAlert(data["json"], Alert.Success);
                 } else {
@@ -82,7 +94,7 @@ export class AttendanceLogic {
                             async (decodedText, decodedResult) => {
                                 if(readCode !== decodedText) {
                                     readCode = decodedText;
-                                    const response = await attendActiveAttendance(parseInt(decodedText));
+                                    const response = await this._attendanceService.attendActiveAttendance(parseInt(decodedText));
                                     if(response["status"]) {
                                         const data = JSON.parse(response["json"]);
                                         const dataStatus = data["status"];
@@ -116,34 +128,9 @@ export class AttendanceLogic {
                 console.error(e);
             }
         })
-
-        /*(async () => {
-            if(!await QrScanner.hasCamera()) {
-                scanbutton.disabled = true;
-            }
-        })();*/
-        /*scanbutton.addEventListener('click', async () => {
-            const video = document.createElement("video");
-            video.height = 180;
-            video.width = 320;
-            this._attendanceComponent.index_container_form.appendChild(video);
-            const qrScanner = new QrScanner(
-                video,
-                async (result) => {
-                    const data = await attendActiveAttendance(parseInt(result))
-                    if(data["status"]) {
-                        this._utils.generateAlert(data["json"], Alert.Success);
-                    } else {
-                        this._utils.generateAlert("", Alert.Danger);
-                    }
-                    qrScanner.stop();
-                }
-            );
-            await qrScanner.start();
-        })*/
     }
 
-    submitModuleButton(utils: Utils) {
+    submitModuleButton(utils: GeneralUtility): void {
         const submitButton = document.getElementById("smsubmitbutton");
         submitButton.addEventListener("click", async () => {
             if(utils.selectedModule !== null) {
@@ -154,8 +141,8 @@ export class AttendanceLogic {
         });
     };
 
-    async selectDate(moduleName: string) {
-        const data = await loadModule(moduleName);
+    async selectDate(moduleName: string): Promise<void> {
+        const data = await ServiceFactory.createModuleService().loadModule(moduleName);
         const h2 = document.getElementById("hh2");
         h2.textContent = moduleName + " : Select a Date";
         const ul = document.getElementById("selmodul") as HTMLUListElement;

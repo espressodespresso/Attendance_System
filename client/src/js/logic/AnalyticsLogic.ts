@@ -1,33 +1,31 @@
-import {Utils} from "../utilities/Utils";
-import {loadModule} from "../services/ModuleService";
-import {AnalyticsComponent} from "../components/AnalyticsComponent";
+import {GeneralUtility} from "../utilities/GeneralUtility";
+import {IAnalyticsComponent} from "../components/AnalyticsComponent";
 import Chart, {ActiveElement, ChartData, ChartEvent} from "chart.js/auto"
-import {
-    getModuleAttendanceRateData,
-    getModuleAverageAttendanceRateData,
-    getModuleTableData,
-    getUserAttendanceRateData,
-    getUserTableData
-} from "../services/AnalyticsService";
 import {Role} from "../enums/Role.enum";
 import {ChartType} from "../enums/ChartType.enum";
 import {disableSpinner} from "../index";
 import {Alert} from "../enums/Alert.enum";
+import {ServiceFactory} from "../services/ServiceFactory";
+import {IAnalyticsService} from "../services/AnalyticsService";
 
-export class AnalyticsLogic {
-    private _utils: Utils = null;
+export interface IAnalyticsLogic {
+    submitButton(): Promise<void>;
+}
+
+export class AnalyticsLogic implements IAnalyticsLogic {
+    private _utils: GeneralUtility = null;
     private _selectedModule: object = null;
-    private _payload: object = null;
-    private _component: AnalyticsComponent = null;
+    private readonly _payload: object = null;
+    private _component: IAnalyticsComponent = null;
+    private _analyticsService: IAnalyticsService = null;
 
-    private _mtimetable: Date[] = null;
-    private _uattendedObj: object = null;
     private _controlButtons: HTMLButtonElement[] = [];
 
-    constructor(utils: Utils, payload: object, component: AnalyticsComponent) {
+    constructor(utils: GeneralUtility, payload: object, component: IAnalyticsComponent) {
         this._utils = utils;
         this._component = component;
         this._payload = payload;
+        this._analyticsService = ServiceFactory.createAnalyticsService();
         const dselButton = document.getElementById("deselectbutton");
         dselButton.addEventListener('click', async () => {
             this._selectedModule = null;
@@ -88,15 +86,13 @@ export class AnalyticsLogic {
         return null;
     }
 
-    async submitButton() {
+    async submitButton(): Promise<void> {
         const submitbuttom = document.getElementById("smsubmitbutton");
         submitbuttom.addEventListener('click', async () => {
             if(this._utils.selectedModule !== null) {
                 const selmodh4 = document.getElementById("selmodh4");
                 selmodh4.textContent = "Selected Module: " + this._utils.selectedModule;
-                this._selectedModule = await loadModule(this._utils.selectedModule);
-                this._mtimetable = this._selectedModule["timetable"];
-                this._uattendedObj = this.getAttObjfromArray(this.getUserInfo()["attended"], this._selectedModule["name"]);
+                this._selectedModule = await ServiceFactory.createModuleService().loadModule(this._utils.selectedModule);
                 document.getElementById("analytics-data-container").innerHTML = "";
                 for(let i = 0; i < this._controlButtons.length; i++) {
                     this._controlButtons[i].disabled = false;
@@ -118,12 +114,12 @@ export class AnalyticsLogic {
     }
 
     private async initUserTable() {
-        const response: object = await getUserTableData(this.getUserInfo()["username"], this._selectedModule["name"])
+        const response: object = await this._analyticsService.getUserTableData(this.getUserInfo()["username"], this._selectedModule["name"])
         this.initTable(response["headStrings"], response["bodyStrings"]);
     }
 
     private async initModuleTable() {
-        const response: object = await getModuleTableData(this._selectedModule["name"])
+        const response: object = await this._analyticsService.getModuleTableData(this._selectedModule["name"])
         this.initTable(response["headStrings"], response["bodyStrings"]);
     }
 
@@ -163,17 +159,17 @@ export class AnalyticsLogic {
     }
 
     private async initModuleAverageAttendanceRateGraph(container: HTMLElement) {
-        const response: object = await getModuleAverageAttendanceRateData(this._selectedModule["name"])
+        const response: object = await this._analyticsService.getModuleAverageAttendanceRateData(this._selectedModule["name"])
         await this.initGraph("moduleAvgAttendanceRateChart", ChartType.Line, response["data"], container);
     }
 
     private async initModuleAttendanceRateGraph(container: HTMLElement) {
-        const response: object = await getModuleAttendanceRateData(this._selectedModule["name"])
+        const response: object = await this._analyticsService.getModuleAttendanceRateData(this._selectedModule["name"])
         await this.initGraph("userAttendanceRateChart", ChartType.Bar, response["graph"], container, true, response);
     }
 
     private async initAttendanceRateGraph(container: HTMLElement) {
-        const response: object = await getUserAttendanceRateData
+        const response: object = await this._analyticsService.getUserAttendanceRateData
         (this.getUserInfo()["username"] ,this._selectedModule["name"])
         await this.initGraph("attendanceRateChart", ChartType.Line, response["data"], container);
     }

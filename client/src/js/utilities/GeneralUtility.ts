@@ -1,14 +1,24 @@
 import {Role} from "../enums/Role.enum";
-import {loadModule, loadModules, moduleList} from "../services/ModuleService";
-import {ModuleAction} from "../enums/ModuleAction.enum";
-import {AuthModLogic} from "../logic/AuthModLogic";
-import {AuthorativeModule} from "../components/modules/AuthModComponent";
-import {AttendanceComponent} from "../components/AttendanceComponent";
-import {AttendanceLogic} from "../logic/AttendanceLogic";
 import {Alert} from "../enums/Alert.enum";
+import {IModuleService} from "../services/ModuleService";
+import {ServiceFactory} from "../services/ServiceFactory";
 
-export class Utils {
+export class GeneralUtility {
+    private static _instance: GeneralUtility = null;
     private _selectedModule: string = null;
+    private _moduleService: IModuleService = null;
+
+    constructor() {
+        this._moduleService = ServiceFactory.createModuleService();
+    }
+
+    static getInstance(): GeneralUtility {
+        if(this._instance === null) {
+            this._instance = new GeneralUtility();
+        }
+
+        return this._instance;
+    }
 
     get selectedModule() {
         return this._selectedModule;
@@ -126,16 +136,14 @@ export class Utils {
 
     async selectEMCComponentLogic(payload: object): Promise<object[]> {
         const userInfo = payload["json"]["userinfo"];
-        let loadedModules: object[] = await loadModules();
+        let loadedModules: object[] = await this._moduleService.loadModules();
         switch (userInfo["role"]) {
             case Role.Student:
                 const module_list: string[] = userInfo["module_list"];
                 console.log(module_list);
                 const tempModules: object[] = [];
                 for(let i = 0; i < module_list.length; i++) {
-                    console.log(module_list[i])
-                    console.log(await loadModule(module_list[i]));
-                    tempModules.push(await loadModule(module_list[i]));
+                    tempModules.push(await this._moduleService.loadModule(module_list[i]));
                 }
                 loadedModules = tempModules;
                 break;
@@ -183,7 +191,7 @@ export class Utils {
     // Generate Module List Common Functions
 
     async initModuleList(container: HTMLElement) {
-        const data: object[] = await moduleList();
+        const data: object[] = await this._moduleService.moduleList();
         if(data === null) {
             this.noData(container);
         } else {

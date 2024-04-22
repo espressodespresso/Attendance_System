@@ -1,15 +1,20 @@
-import {loadModule, loadModules} from "../services/ModuleService";
 import {Role} from "../enums/Role.enum";
 import Chart, {ChartData} from "chart.js/auto";
 import {ChartType} from "../enums/ChartType.enum";
-import {getIndexTableData, getModuleAttendanceRateData, getUserAttendanceRateData} from "../services/AnalyticsService";
+import {IAnalyticsService} from "../services/AnalyticsService";
 import {disableSpinner} from "../index";
+import {IModuleService} from "../services/ModuleService";
+import {ServiceFactory} from "../services/ServiceFactory";
 
 export class HomeLogic {
-    private _payload: object;
+    private readonly _payload: object = null;
+    private _moduleService: IModuleService = null;
+    private _analyticsService: IAnalyticsService = null;
 
     constructor(payload: object) {
         this._payload = payload;
+        this._moduleService = ServiceFactory.createModuleService();
+        this._analyticsService = ServiceFactory.createAnalyticsService();
         (async () => {
             const userInfo: object = await this.getRandomAttendanceTrend();
             if(userInfo === null) {
@@ -40,22 +45,22 @@ export class HomeLogic {
         try {
             switch (payloadRole) {
                 case Role.Student: {
-                    const module: object = await loadModule(module_list[Math.round(Math.random() * (module_list.length - 1))]);
-                    const response: object = await getUserAttendanceRateData(username, module["name"])
+                    const module: object = await this._moduleService.loadModule(module_list[Math.round(Math.random() * (module_list.length - 1))]);
+                    const response: object = await this._analyticsService.getUserAttendanceRateData(username, module["name"])
                     this.initChart(response["data"], ChartType.Line);
                     break;
                 }
                 case Role.Lecturer: {
-                    const module: object = await loadModule(module_list[Math.round(Math.random() * (module_list.length - 1))]);
-                    const response: object = await getModuleAttendanceRateData(module["name"])
+                    const module: object = await this._moduleService.loadModule(module_list[Math.round(Math.random() * (module_list.length - 1))]);
+                    const response: object = await this._analyticsService.getModuleAttendanceRateData(module["name"])
                     this.initChart(response["graph"], ChartType.Bar);
                     break;
                 }
                 case Role.AdministrativeFM:
                 case Role.IT:
-                    const modules: object[] = await loadModules();
+                    const modules: object[] = await this._moduleService.loadModules();
                     const module: object = modules[Math.round(Math.random() * (modules.length - 1))];
-                    const response: object = await getModuleAttendanceRateData(module["name"])
+                    const response: object = await this._analyticsService.getModuleAttendanceRateData(module["name"])
                     this.initChart(response["graph"], ChartType.Bar);
                     break;
             }
@@ -96,8 +101,8 @@ export class HomeLogic {
         container.appendChild(document.createElement("br"));
     }
 
-    async initLessonsTable() {
-        const data: object = await getIndexTableData()
+    private async initLessonsTable() {
+        const data: object = await this._analyticsService.getIndexTableData()
         const container: HTMLElement = document.getElementById("index-side-container-tab2-content");
         const thead = document.getElementById("tablehead");
         const tbody = document.getElementById("tablebody");

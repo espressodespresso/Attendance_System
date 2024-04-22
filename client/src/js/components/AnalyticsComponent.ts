@@ -1,15 +1,23 @@
-import {Utils} from "../utilities/Utils";
-import {AnalyticsLogic} from "../logic/AnalyticsLogic";
-import {disableSpinner} from "../index";
+import {GeneralUtility} from "../utilities/GeneralUtility";
+import {IAnalyticsLogic} from "../logic/AnalyticsLogic";
+import {LogicFactory} from "../logic/LogicFactory";
+
+export interface IAnalyticsComponent {
+    selectModule(payload: object): Promise<void>;
+    displayTable(): void;
+    displayGraph(): void;
+    addControlbutton(name: string, id: string): HTMLButtonElement;
+    get container(): HTMLElement;
+}
 
 export class AnalyticsComponent {
-    private _utils: Utils = null;
-    private _analyticsLogic: AnalyticsLogic = null;
+    private _utils: GeneralUtility = null;
+    private _analyticsLogic: IAnalyticsLogic = null;
     private _payload: object = null;
 
     constructor(payload: object) {
-        this._utils = new Utils();
-        this._analyticsLogic = new AnalyticsLogic(this._utils, payload, this);
+        this._utils = GeneralUtility.getInstance();
+        this._analyticsLogic = LogicFactory.createAnalyticsLogic(this._utils, payload, this);
         this._payload = payload;
         (async () => {
             await this.selectModule(payload);
@@ -18,7 +26,7 @@ export class AnalyticsComponent {
         });
     }
 
-    async selectModule(payload: object) {
+    async selectModule(payload: object): Promise<void> {
         const container = this.getContainer();
         const selectContainer = document.createElement("div");
         selectContainer.classList.add("text-center");
@@ -29,7 +37,7 @@ export class AnalyticsComponent {
         await this._analyticsLogic.submitButton();
     }
 
-    displayTable() {
+    displayTable(): void {
         const container = this.getContainer();
         const table = document.createElement("table");
         table.classList.add("table");
@@ -42,7 +50,7 @@ export class AnalyticsComponent {
         container.appendChild(table);
     }
 
-    displayGraph() {
+    displayGraph(): void {
         const container = this.getContainer();
     }
 

@@ -3,34 +3,43 @@ import {Fetch} from "../enums/Fetch.enum";
 import {Route} from "../enums/Route.enum";
 import {Accept} from "../enums/Accept.enum";
 
-const requestService = new RequestService();
-
-export async function getUserAttendanceRateData(username: string, module_name: string) {
-    const data: object = await requestService.handleFetch(Fetch.GET, Route.analytics, `/attendance/${username}/${module_name}`, Accept.JSON);
-    return JSON.parse(data["json"]);
-};
-
-export async function getModuleAttendanceRateData(module_name: string) {
-    const data: object = await requestService.handleFetch(Fetch.GET, Route.analytics, `/attendance/${module_name}`, Accept.JSON);
-    return JSON.parse(data["json"]);
-};
-
-export async function getModuleAverageAttendanceRateData(module_name: string) {
-    const data: object = await requestService.handleFetch(Fetch.GET, Route.analytics, `/attendance/avg/${module_name}/data`, Accept.JSON);
-    return JSON.parse(data["json"]);
+export interface IAnalyticsService {
+    getUserAttendanceRateData(username: string, module_name: string): Promise<object>;
+    getModuleAttendanceRateData(module_name: string): Promise<object>;
+    getModuleAverageAttendanceRateData(module_name: string): Promise<object>;
+    getUserTableData(username: string, module_name: string): Promise<object>;
+    getModuleTableData(module_name: string): Promise<object>;
+    getIndexTableData(): Promise<object>;
 }
 
-export async function getUserTableData(username: string, module_name: string) {
-    const data: object = await requestService.handleFetch(Fetch.GET, Route.analytics, `/table/${username}/${module_name}`, Accept.JSON);
-    return JSON.parse(data["json"]);
-}
+export class AnalyticsService extends RequestService implements IAnalyticsService {
+    async getUserAttendanceRateData(username: string, module_name: string): Promise<object> {
+        const data: object = await super.handleFetch(Fetch.GET, Route.analytics, `/attendance/${username}/${module_name}`, Accept.JSON);
+        return JSON.parse(data["json"]);
+    };
 
-export async function getModuleTableData(module_name: string) {
-    const data: object = await requestService.handleFetch(Fetch.GET, Route.analytics, `/table/${module_name}`, Accept.JSON);
-    return JSON.parse(data["json"]);
-}
+    async getModuleAttendanceRateData(module_name: string): Promise<object>  {
+        const data: object = await super.handleFetch(Fetch.GET, Route.analytics, `/attendance/${module_name}`, Accept.JSON);
+        return JSON.parse(data["json"]);
+    };
 
-export async function getIndexTableData() {
-    const data: object = await requestService.handleFetch(Fetch.GET, Route.analytics, `/indextable`, Accept.JSON);
-    return JSON.parse(data["json"]);
+    async getModuleAverageAttendanceRateData(module_name: string): Promise<object>  {
+        const data: object = await super.handleFetch(Fetch.GET, Route.analytics, `/attendance/avg/${module_name}/data`, Accept.JSON);
+        return JSON.parse(data["json"]);
+    }
+
+    async getUserTableData(username: string, module_name: string): Promise<object>  {
+        const data: object = await super.handleFetch(Fetch.GET, Route.analytics, `/table/${username}/${module_name}`, Accept.JSON);
+        return JSON.parse(data["json"]);
+    }
+
+    async getModuleTableData(module_name: string): Promise<object>  {
+        const data: object = await super.handleFetch(Fetch.GET, Route.analytics, `/table/${module_name}`, Accept.JSON);
+        return JSON.parse(data["json"]);
+    }
+
+    async getIndexTableData(): Promise<object>  {
+        const data: object = await super.handleFetch(Fetch.GET, Route.analytics, `/indextable`, Accept.JSON);
+        return JSON.parse(data["json"]);
+    }
 }

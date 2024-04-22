@@ -1,13 +1,20 @@
 import flatpickr from "flatpickr";
-import {AuthModLogic} from "../../logic/AuthModLogic";
+import {IAuthModLogic} from "../../logic/AuthModLogic";
 import {ModuleAction} from "../../enums/ModuleAction.enum";
-import * as timers from "timers";
-import {Utils} from "../../utilities/Utils";
-import {disableSpinner} from "../../index";
+import {GeneralUtility} from "../../utilities/GeneralUtility";
+import {LogicFactory} from "../../logic/LogicFactory";
 
-export class AuthorativeModule {
+export interface IAuthModComponent {
+    getModuleForm(): HTMLElement;
+    selectExistingModule(h2_title: string, btn_title: string, action: ModuleAction, payload: object): Promise<void>;
+    createModule(): void;
+    editModule(module: object): void;
+    deleteModule(module: object): void;
+    dashboardModule(): void;
+}
 
-    private _authModLogic: AuthModLogic = null;
+export class AuthModComponent {
+    private _authModLogic: IAuthModLogic = null;
 
     constructor(payload: object) {
         const mod_container = document.getElementById("modules-container");
@@ -71,7 +78,7 @@ export class AuthorativeModule {
         col_9.appendChild(module_content);
         row.appendChild(col_9);
         mod_container.appendChild(row);
-        this._authModLogic = new AuthModLogic(this, payload);
+        this._authModLogic = LogicFactory.createAuthModLogic(this, payload);
         this.dashboardModule();
     }
 
@@ -85,23 +92,23 @@ export class AuthorativeModule {
         element.appendChild(document.createElement("br"));
     }
 
-    async selectExistingModule(h2_title: string, btn_title: string, action: ModuleAction, payload: object) {
-        const utils: Utils = new Utils();
+    async selectExistingModule(h2_title: string, btn_title: string, action: ModuleAction, payload: object): Promise<void> {
+        const utils: GeneralUtility = GeneralUtility.getInstance();
         utils.selectExistingModuleComponent(this.getModuleForm(), h2_title, btn_title);
         const loadedModules = await utils.selectEMCComponentLogic(payload);
         this._authModLogic.submitButton(utils, loadedModules, action, this);
     }
 
-    createModule() {
+    createModule(): void {
         this._authModLogic.createModule(this.moduleDataInput("Create a new module"));
     }
 
-    editModule(module: object) {
+    editModule(module: object): void {
         const title: string = "Editing : " + module["name"];
         this._authModLogic.editModule(this.moduleDataInput(title), module);
     }
 
-    deleteModule(module: object) {
+    deleteModule(module: object): void {
         const module_Form = this.getModuleForm();
         const title = document.createElement("h2");
         title.textContent = "Are you sure you want to delete this?";
@@ -228,7 +235,7 @@ export class AuthorativeModule {
         return fp;
     }
 
-    dashboardModule() {
+    dashboardModule(): void {
         this._authModLogic.dashboardModule();
     }
 }

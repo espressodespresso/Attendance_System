@@ -2,8 +2,12 @@ import {Accept} from "../enums/Accept.enum";
 import {Fetch} from "../enums/Fetch.enum";
 import {Route} from "../enums/Route.enum";
 
-export class RequestService {
-    private apiAddress: string = "https://localhost:443/";
+interface IRequestService {
+    handleFetch(fetch: Fetch, route: Route, url: string, accept?: Accept, body?: string): Promise<object>;
+}
+
+export class RequestService implements IRequestService {
+    private _apiAddress: string = "https://localhost:443/";
 
     async handleFetch(fetch: Fetch, route: Route, url: string, accept?: Accept, body?: string): Promise<object> {
         let tempRoute: string = null;
@@ -24,7 +28,7 @@ export class RequestService {
                 tempRoute = "module";
                 break;
         }
-        const completedAddress = `${this.apiAddress}${tempRoute}${url}`;
+        const completedAddress = `${this._apiAddress}${tempRoute}${url}`;
         try {
             let data: object = null;
             switch (fetch) {
@@ -164,7 +168,7 @@ export class RequestService {
         }
     }
 
-    async FetchDELETERequest(url: string): Promise<boolean> {
+    private async FetchDELETERequest(url: string): Promise<boolean> {
         try {
             const response = await fetch(url, {
                 method: "DELETE",

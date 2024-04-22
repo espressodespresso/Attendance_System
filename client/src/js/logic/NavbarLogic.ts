@@ -1,10 +1,10 @@
-import {logout} from "../services/AuthService";
+import {ServiceFactory} from "../services/ServiceFactory";
 
 export class NavbarLogic {
     constructor() {
         const logoutElement = document.getElementById("logout_button");
         logoutElement.addEventListener('click', async () => {
-            await logout();
+            await ServiceFactory.createAuthService().logout();
             setTimeout( () => {
                 window.location.reload();
             }, 2000)

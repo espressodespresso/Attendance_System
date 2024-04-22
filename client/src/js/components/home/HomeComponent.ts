@@ -1,7 +1,8 @@
 import {Role} from "../../enums/Role.enum";
-import {HomeLogic} from "../../logic/HomeLogic";
-import {AttendanceComponent} from "../AttendanceComponent";
 import {disableSpinner} from "../../index";
+import {LogicFactory} from "../../logic/LogicFactory";
+import {ComponentFactory} from "../ComponentFactory";
+import {IAttendanceComponent} from "../AttendanceComponent";
 
 export class HomeComponent {
     private _side_container_title: HTMLElement;
@@ -12,10 +13,9 @@ export class HomeComponent {
     private _side_container_tab2_content: HTMLElement;
     private _side_container_tab3_title: HTMLElement;
     private _side_container_tab3_content: HTMLElement;
-    private _index_container_form: HTMLElement = null;
+    private readonly _index_container_form: HTMLElement = null;
 
-    private _homeLogic: HomeLogic = null;
-    private _attendanceComponent: AttendanceComponent = null;
+    private _attendanceComponent: IAttendanceComponent = null;
 
     constructor(payload: object) {
         // Side Container Title
@@ -35,8 +35,8 @@ export class HomeComponent {
         this._index_container_form = document.getElementById("index-content-container-form");
 
         // Init components
-        this._homeLogic = new HomeLogic(payload);
-        this._attendanceComponent = new AttendanceComponent(this._index_container_form);
+        LogicFactory.createHomeLogic(payload);
+        this._attendanceComponent = ComponentFactory.createAttendanceComponent(this._index_container_form, payload);
 
         // Generate Container Features
         switch (payload["json"]["userinfo"]["role"]) {
