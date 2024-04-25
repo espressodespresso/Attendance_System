@@ -30,6 +30,7 @@ moduleRoute.get('/userlist', async (c) => {
 moduleRoute.post('/create', async (c) => {
    return await routeService.handleErrors(c, elevatedRoleAuth, async (): Promise<Response> => {
        const body: JSON = await routeService.getBody(c);
+       console.log(`here ${await routeService.getBody(c)}`);
        const moduleName = body["name"];
        const moduleLeader = body["leader"];
        if(!await moduleService.verifyModuleExists(moduleName)) {

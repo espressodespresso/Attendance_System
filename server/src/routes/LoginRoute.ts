@@ -16,8 +16,20 @@ loginRoute.post('/', async (c) => {
         const data = await ServiceFactory.createAuthService().login(body["username"], body["password"]);
         switch (data["authstate"]) {
             case AuthState.Located:
-                await routeService.setGenAuthToken(c, data["account"]);
-                await routeService.setGenRefreshToken(c, body["fingerprint"], body["username"]);
+                if(typeof body["testing"] !== "undefined") {
+                    // Work around for Hono Testing Suite bug
+                    if(body["testing"]) {
+                        await routeService.setGenRefreshToken(c, body["fingerprint"], body["username"], true);
+                        await routeService.setGenAuthToken(c, data["account"]);
+                    } else {
+                        await routeService.setGenAuthToken(c, data["account"]);
+                        await routeService.setGenRefreshToken(c, body["fingerprint"], body["username"]);
+                    }
+                } else {
+                    await routeService.setGenAuthToken(c, data["account"]);
+                    await routeService.setGenRefreshToken(c, body["fingerprint"], body["username"]);
+                }
+
                 break;
             case AuthState.InvalidPass:
                 c.status(401);

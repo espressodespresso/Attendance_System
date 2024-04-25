@@ -36,7 +36,7 @@ export class AuthService implements IAuthService {
             return await this._mongoService.findOne(query, Collection.users);
         });
         // Clears refresh tokens
-        await GeneralUtility.getInstance().checkRefreshTokens();
+        //await GeneralUtility.getInstance().checkRefreshTokens();
 
         let obj = {
             authstate: undefined,

@@ -12,7 +12,7 @@ export interface IRouteService {
     getAuthToken(c: any): string;
     getRefreshToken(c: any): string;
     setGenAuthToken(c: any, account: object): Promise<void>;
-    setGenRefreshToken(c: any, fingerprint: string, username: string): Promise<void>
+    setGenRefreshToken(c: any, fingerprint: string, username: string, testing?: boolean): Promise<void>
     logoutToken(c: any, token: string, refresh_token: string): void;
 }
 
@@ -47,7 +47,12 @@ export class RouteService implements IRouteService{
     }
 
     private getCookiesArray(c: any): string[] {
-        return c.req.header('cookie').split(" ");
+        const cookieHeader = c.req.header('cookie');
+        if(typeof cookieHeader !== 'undefined') {
+            return cookieHeader.split(" ");
+        }
+
+        return [];
     }
 
     async getBody(c: any): Promise<JSON> {
@@ -79,12 +84,14 @@ export class RouteService implements IRouteService{
     }
 
     async setGenAuthToken(c: any, account: object): Promise<void> {
-        const test = await this.setGenToken(c, "token", account, process.env.SECRET, 900);
+        await this.setGenToken(c, "token", account, process.env.SECRET, 900);
     }
 
-    async setGenRefreshToken(c: any, fingerprint: string, username: string): Promise<void> {
+    async setGenRefreshToken(c: any, fingerprint: string, username: string, testing?: boolean): Promise<void> {
         const token: string = await this.setGenToken(c, "refresh_token", fingerprint, process.env.REFRESH_SECRET, 1800);
-        await ServiceFactory.createAccountService().storeRefreshToken(token, username, fingerprint);
+        if(typeof testing === 'undefined') {
+            await ServiceFactory.createAccountService().storeRefreshToken(token, username, fingerprint);
+        }
     }
 
     logoutToken(c: any, token: string, refresh_token: string): void {

@@ -16,17 +16,19 @@ export function disableSpinner() {
 
 async function loadItems() {
     const payload = await verifyPayload();
-    switch (window.location.pathname) {
-        case "/attendance_system/client/src/modules.html":
+    const splitPath = window.location.pathname.split("/");
+    console.log(splitPath[splitPath.length - 1].split('.')[0])
+    switch (splitPath[splitPath.length - 1].split('.')[0]) {
+        case "modules":
             await loadModules(payload);
             break;
-        case "/attendance_system/client/src/index.html":
+        case "index":
             ComponentFactory.createHomeComponent(payload);
             break;
-        case "/attendance_system/client/src/analytics.html":
+        case "analytics":
             ComponentFactory.createAnalyticsComponent(payload);
             break;
-        case "/attendance_system/client/src/login.html":
+        case "login":
             disableSpinner();
             break;
     }
